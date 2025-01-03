@@ -1,0 +1,13 @@
+services:
+  aura:
+    build: .
+    container_name: aura
+    ports:
+      - "8080:8080"
+    networks:
+      - aura-net
+
+
+networks:
+  aura-net:
+    driver: bridge
