@@ -1,6 +1,6 @@
 # Set the name of the binary and the Go version
 BINARY_NAME=temp/main
-GO_VERSION=1.18
+GO_VERSION=1.23.4
 
 # Set default Go build flags
 GO_FLAGS=-v
@@ -62,4 +62,10 @@ docker-run: docker
 # Set up the local development environment (e.g., Docker Compose)
 dev-env:
 	@echo "Setting up development environment with Docker Compose..."
-	docker-compose up --build
+	docker compose up --build
+
+# Clean up the local development environment (e.g., Docker Compose)
+clean-dev-env:
+	@echo "Cleaning up development environment with Docker Compose..."
+	docker compose down -v
+
