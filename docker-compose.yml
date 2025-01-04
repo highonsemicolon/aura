@@ -1,6 +1,9 @@
 services:
   aura:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
     container_name: aura
     ports:
       - "8080:8080"
