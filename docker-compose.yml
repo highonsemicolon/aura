@@ -5,11 +5,22 @@ services:
       dockerfile: Dockerfile
       target: dev
     container_name: aura
-    ports:
-      - "8080:8080"
+    volumes:
+      - ./:/app
     networks:
       - aura-net
 
+  nginx:
+    build: ./nginx
+    container_name: nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - aura
+    networks:
+      - aura-net
 
 networks:
   aura-net:
