@@ -1,0 +1,7 @@
+certs
+*.pem
+*.cert
+*.crt
+.vscode
+tmp
+__debug
