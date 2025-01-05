@@ -98,7 +98,7 @@ help:
 
 ensure-tools:
 	@echo "Ensuring required tools are installed..."
-	@command -v air > /dev/null || { echo "Installing air..."; go install github.com/cosmtrek/air@latest; }
+	@command -v air > /dev/null || { echo "Installing air..."; go install github.com/air-verse/air@latest; }
 	@command -v golangci-lint > /dev/null || { echo "Installing golangci-lint..."; go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; }
 
 version:
