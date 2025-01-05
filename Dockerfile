@@ -9,9 +9,7 @@ FROM golang:1.23-alpine AS dev
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod tidy 
-RUN apk add --no-cache bash git curl
-RUN curl -fLo /usr/local/bin/air https://github.com/air-verse/air/releases/download/v1.61.5/air_1.61.5_linux_arm64 \
-    && chmod +x /usr/local/bin/air
+RUN go install github.com/air-verse/air@latest
 COPY . .
 CMD ["air"]
 
