@@ -40,8 +40,8 @@ test:
 
 test-coverage:
 	@echo "Running tests with coverage..."
-	go test -coverprofile=coverage.out
-	go tool cover -html=coverage.out
+	go test ./... -coverprofile=coverage.out
+	# go tool cover -html=coverage.out
 
 # ---- Cleanup Targets ----
 
