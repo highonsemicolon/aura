@@ -20,6 +20,7 @@ RUN wget http://nginx.org/download/nginx-$(nginx -v 2>&1 | grep -oP '\d+\.\d+\.\
     cp objs/*.so /usr/lib/nginx/modules
 
 COPY nginx.conf /etc/nginx/nginx.conf
+COPY auth_jwt_key.conf /etc/nginx/auth_jwt_key.conf
 
 RUN apt-get purge -y build-essential git wget && apt-get autoremove -y && apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/*
