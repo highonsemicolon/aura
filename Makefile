@@ -10,9 +10,9 @@ all: build
 # ---- Build & Run Targets ----
 
 build:
-	@if [ ! -f cmd/main.go ]; then echo "Error: cmd/main.go not found!"; exit 1; fi
+	@if [ ! -f src/main.go ]; then echo "Error: src/main.go not found!"; exit 1; fi
 	@echo "Building the Go application..."
-	go build $(GO_FLAGS) -o $(BINARY_NAME) cmd/main.go
+	go build $(GO_FLAGS) -o $(BINARY_NAME) src/main.go
 
 run: build
 	@echo "Running the application..."
@@ -20,7 +20,8 @@ run: build
 
 run-hot: build
 	@echo "Running the application with hot reload..."
-	air -c ~/.air.toml
+	# air -c ~/.air.toml
+	air
 
 # ---- Code Quality Targets ----
 

@@ -1,4 +1,4 @@
-module github.com/highonsemicolon/aura
+module aura
 
 go 1.23.4
 
