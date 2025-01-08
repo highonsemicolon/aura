@@ -24,7 +24,9 @@ func (f *FileWatcher) Start() error {
 	if err := f.loadPrivileges(); err != nil {
 		return err
 	}
-	go f.Watch()
+	if err := f.Watch(); err != nil {
+		return err
+	}
 	return nil
 }
 
