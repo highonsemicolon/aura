@@ -1,0 +1,20 @@
+roles:
+  owner:
+    inherits:
+      - editor
+    privileges:
+      - action: assign
+
+  editor:
+    inherits:
+      - viewer
+    privileges:
+      - action: write
+
+  viewer:
+    privileges:
+      - action: read
+
+  public:
+    inherits:
+      - viewer
