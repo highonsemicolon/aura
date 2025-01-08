@@ -24,9 +24,12 @@ func (f *FileWatcher) Start() error {
 	if err := f.loadPrivileges(); err != nil {
 		return err
 	}
-	if err := f.Watch(); err != nil {
-		return err
-	}
+
+	go func() {
+		if err := f.watch(); err != nil {
+			log.Fatal("error watching file:", err)
+		}
+	}()
 	return nil
 }
 
@@ -45,7 +48,7 @@ func (f *FileWatcher) loadPrivileges() error {
 	return nil
 }
 
-func (f *FileWatcher) Watch() error {
+func (f *FileWatcher) watch() error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return err
@@ -67,7 +70,6 @@ func (f *FileWatcher) Watch() error {
 				} else {
 					f.privileges = newPrivileges
 					log.Println("privileges reloaded successfully")
-
 				}
 			}
 		case err := <-watcher.Errors:
