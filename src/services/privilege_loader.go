@@ -5,6 +5,11 @@ import (
 	"sync"
 )
 
+type ReadOnlyMap interface {
+	Load(key interface{}) (value interface{}, ok bool)
+	Range(f func(key, value interface{}) bool)
+}
+
 type PrivilegeLoader struct {
 	filename                 string
 	effectivePrivilegesCache *sync.Map
@@ -54,4 +59,8 @@ func (pl *PrivilegeLoader) GetEffectivePrivileges(role string) ([]string, bool) 
 		return nil, false
 	}
 	return privileges.([]string), true
+}
+
+func (pl *PrivilegeLoader) GetEffectivePrivilegesCache() ReadOnlyMap {
+	return pl.effectivePrivilegesCache
 }

@@ -2,7 +2,6 @@ package services
 
 import (
 	"log"
-	"sync"
 
 	"github.com/fsnotify/fsnotify"
 )
@@ -24,8 +23,8 @@ func (f *FileWatcher) GetEffectivePrivileges(role string) ([]string, bool) {
 	return f.privilegeLoader.GetEffectivePrivileges(role)
 }
 
-func (f *FileWatcher) GetEffectivePrivilegess() *sync.Map {
-	return f.privilegeLoader.effectivePrivilegesCache
+func (f *FileWatcher) GetEffectivePrivilegesCache() ReadOnlyMap {
+	return f.privilegeLoader.GetEffectivePrivilegesCache()
 }
 
 func (f *FileWatcher) Start() {
