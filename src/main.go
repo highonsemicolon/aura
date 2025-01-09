@@ -1,13 +1,9 @@
 package main
 
 import (
-	"log"
+	"time"
 
-	"aura/src/handlers"
-	"aura/src/middleware"
 	"aura/src/services"
-
-	"github.com/gin-gonic/gin"
 )
 
 var fw *services.FileWatcher
@@ -17,16 +13,35 @@ func init() {
 	go fw.Watch()
 }
 
-}
-
 func main() {
-	r := gin.Default()
-	r.Use(middleware.UserIDMiddleware)
+	// r := gin.Default()
+	// r.Use(middleware.UserIDMiddleware)
 
-	api := r.Group("/api")
-	{
-		api.GET("/policies", handlers.CheckPermission)
+	// time.Sleep(2 * time.Second)
+
+	var mp = fw.GetEffectivePrivilegesCache()
+
+	for {
+		println(services.IsActionAllowed("editor", "read", mp))
+		time.Sleep(2 * time.Second)
 	}
 
-	log.Fatal(r.Run(":8080"))
+	// for {
+	// 	mp.Range(func(key, value interface{}) bool {
+	// 		fmt.Printf("Role: %s: %v\n", key, value)
+	// 		return true
+	// 	})
+
+	// 	fmt.Println(&mp)
+	// 	time.Sleep(2 * time.Second)
+
+	// 	println()
+	// }
+
+	// api := r.Group("/api")
+	// {
+	// 	api.GET("/policies", handlers.CheckPermission)
+	// }
+
+	// log.Fatal(r.Run(":8080"))
 }
