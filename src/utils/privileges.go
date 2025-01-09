@@ -32,3 +32,26 @@ func LoadPrivileges(filename string) (*RolePrivileges, error) {
 
 	return &privileges, nil
 }
+
+func ComputeRolePrivilegesDFS(role string, privileges *RolePrivileges, visited map[string]bool) []string {
+	if visited[role] {
+		return nil
+	}
+	visited[role] = true
+
+	roleData, exists := privileges.Roles[role]
+	if !exists {
+		return nil
+	}
+
+	effective := make([]string, 0)
+	for _, privilege := range roleData.Privileges {
+		effective = append(effective, privilege.Action)
+	}
+
+	for _, inheritedRole := range roleData.Inherits {
+		effective = append(effective, ComputeRolePrivilegesDFS(inheritedRole, privileges, visited)...)
+	}
+
+	return effective
+}

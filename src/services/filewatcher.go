@@ -75,7 +75,7 @@ func (f *FileWatcher) watch() error {
 func (f *FileWatcher) computeEffectivePrivileges(privileges *utils.RolePrivileges) {
 	var newPrivileges sync.Map
 	for role := range privileges.Roles {
-		effective := computeRolePrivilegesDFS(role, privileges, make(map[string]bool))
+		effective := utils.ComputeRolePrivilegesDFS(role, privileges, make(map[string]bool))
 		newPrivileges.Store(role, effective)
 	}
 
@@ -83,25 +83,3 @@ func (f *FileWatcher) computeEffectivePrivileges(privileges *utils.RolePrivilege
 	f.effectivePrivilegesCache = &newPrivileges
 }
 
-func computeRolePrivilegesDFS(role string, privileges *utils.RolePrivileges, visited map[string]bool) []string {
-	if visited[role] {
-		return nil
-	}
-	visited[role] = true
-
-	roleData, exists := privileges.Roles[role]
-	if !exists {
-		return nil
-	}
-
-	effective := make([]string, 0)
-	for _, privilege := range roleData.Privileges {
-		effective = append(effective, privilege.Action)
-	}
-
-	for _, inheritedRole := range roleData.Inherits {
-		effective = append(effective, computeRolePrivilegesDFS(inheritedRole, privileges, visited)...)
-	}
-
-	return effective
-}
