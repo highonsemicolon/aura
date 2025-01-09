@@ -33,7 +33,7 @@ func LoadPrivileges(filename string) (*RolePrivileges, error) {
 	return &privileges, nil
 }
 
-func ComputeRolePrivilegesDFS(role string, privileges *RolePrivileges, visited map[string]bool) []string {
+func ComputeRolePrivilegesDFS(role string, privileges *RolePrivileges, visited map[string]bool) map[string]struct{} {
 	if visited[role] {
 		return nil
 	}
@@ -44,13 +44,16 @@ func ComputeRolePrivilegesDFS(role string, privileges *RolePrivileges, visited m
 		return nil
 	}
 
-	effective := make([]string, 0)
+	effective := make(map[string]struct{})
 	for _, privilege := range roleData.Privileges {
-		effective = append(effective, privilege.Action)
+		effective[privilege.Action] = struct{}{}
 	}
 
 	for _, inheritedRole := range roleData.Inherits {
-		effective = append(effective, ComputeRolePrivilegesDFS(inheritedRole, privileges, visited)...)
+		inheritedPrivileges := ComputeRolePrivilegesDFS(inheritedRole, privileges, visited)
+		for action := range inheritedPrivileges {
+			effective[action] = struct{}{}
+		}
 	}
 
 	return effective
