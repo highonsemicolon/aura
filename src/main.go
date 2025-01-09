@@ -14,10 +14,8 @@ var fw *services.FileWatcher
 
 func init() {
 	fw = services.NewFileWatcher("./privileges.yml")
-	if err := fw.Start(); err != nil {
-		log.Fatal("Error starting file watcher:", err)
-		return
-	}
+	go fw.Start()
+
 }
 
 func main() {

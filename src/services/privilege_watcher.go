@@ -28,17 +28,14 @@ func (f *FileWatcher) GetEffectivePrivilegess() *sync.Map {
 	return f.privilegeLoader.effectivePrivilegesCache
 }
 
-func (f *FileWatcher) Start() error {
+func (f *FileWatcher) Start() {
 	if err := f.privilegeLoader.LoadAndComputePrivileges(); err != nil {
-		return err
+		log.Fatal("error loading privileges:", err)
 	}
 
-	go func() {
-		if err := f.watch(); err != nil {
-			log.Fatal("error watching file:", err)
-		}
-	}()
-	return nil
+	if err := f.watch(); err != nil {
+		log.Fatal("error watching file:", err)
+	}
 }
 
 func (f *FileWatcher) watch() error {
