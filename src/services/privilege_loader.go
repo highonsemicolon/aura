@@ -35,7 +35,8 @@ func (pl *PrivilegeLoader) LoadAndComputePrivileges() error {
 func (pl *PrivilegeLoader) computeEffectivePrivileges(privileges *utils.RolePrivileges) {
 	var newPrivileges sync.Map
 	for role := range privileges.Roles {
-		effective := utils.ComputeRolePrivilegesDFS(role, privileges, make(map[string]bool))
+		rawPrivileges := utils.ComputeRolePrivilegesDFS(role, privileges, make(map[string]bool))
+		effective := createActionSet(rawPrivileges)
 		newPrivileges.Store(role, effective)
 	}
 
@@ -63,4 +64,13 @@ func (pl *PrivilegeLoader) GetEffectivePrivileges(role string) ([]string, bool) 
 
 func (pl *PrivilegeLoader) GetEffectivePrivilegesCache() ReadOnlyMap {
 	return pl.effectivePrivilegesCache
+}
+
+
+func createActionSet(actions []string) map[string]struct{} {
+    actionSet := make(map[string]struct{}, len(actions))
+    for _, action := range actions {
+        actionSet[action] = struct{}{}
+    }
+    return actionSet
 }
