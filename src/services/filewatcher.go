@@ -9,14 +9,14 @@ import (
 )
 
 type FileWatcher struct {
-	filename   string
-	privileges *utils.RolePrivileges
-	mu         sync.RWMutex
+	filename                 string
+	effectivePrivilegesCache *sync.Map
 }
 
 func NewFileWatcher(filename string) *FileWatcher {
 	return &FileWatcher{
-		filename: filename,
+		filename:                 filename,
+		effectivePrivilegesCache: &sync.Map{},
 	}
 }
 
@@ -40,11 +40,7 @@ func (f *FileWatcher) loadPrivileges() error {
 		return err
 	}
 
-	f.mu.Lock()
-	defer f.mu.Unlock()
-
-	f.privileges = privileges
-	log.Println("privileges loaded successfully")
+	f.computeEffectivePrivileges(privileges)
 	return nil
 }
 
@@ -64,11 +60,9 @@ func (f *FileWatcher) watch() error {
 		select {
 		case event := <-watcher.Events:
 			if event.Op&fsnotify.Write == fsnotify.Write {
-				newPrivileges, err := utils.LoadPrivileges(f.filename)
-				if err != nil {
+				if err := f.loadPrivileges(); err != nil {
 					log.Println("error reloading privileges:", err)
 				} else {
-					f.privileges = newPrivileges
 					log.Println("privileges reloaded successfully")
 				}
 			}
@@ -78,8 +72,36 @@ func (f *FileWatcher) watch() error {
 	}
 }
 
-func (f *FileWatcher) GetPrivileges() *utils.RolePrivileges {
-	f.mu.RLock()
-	defer f.mu.RUnlock()
-	return f.privileges
+func (f *FileWatcher) computeEffectivePrivileges(privileges *utils.RolePrivileges) {
+	var newPrivileges sync.Map
+	for role := range privileges.Roles {
+		effective := computeRolePrivilegesDFS(role, privileges, make(map[string]bool))
+		newPrivileges.Store(role, effective)
+	}
+
+	f.effectivePrivilegesCache.Clear()
+	f.effectivePrivilegesCache = &newPrivileges
+}
+
+func computeRolePrivilegesDFS(role string, privileges *utils.RolePrivileges, visited map[string]bool) []string {
+	if visited[role] {
+		return nil
+	}
+	visited[role] = true
+
+	roleData, exists := privileges.Roles[role]
+	if !exists {
+		return nil
+	}
+
+	effective := make([]string, 0)
+	for _, privilege := range roleData.Privileges {
+		effective = append(effective, privilege.Action)
+	}
+
+	for _, inheritedRole := range roleData.Inherits {
+		effective = append(effective, computeRolePrivilegesDFS(inheritedRole, privileges, visited)...)
+	}
+
+	return effective
 }
