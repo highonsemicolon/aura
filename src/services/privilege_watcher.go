@@ -27,26 +27,23 @@ func (f *FileWatcher) GetEffectivePrivilegesCache() ReadOnlyMap {
 	return f.privilegeLoader.GetEffectivePrivilegesCache()
 }
 
-func (f *FileWatcher) Start() {
+func (f *FileWatcher) Load() *FileWatcher {
 	if err := f.privilegeLoader.LoadAndComputePrivileges(); err != nil {
 		log.Fatal("error loading privileges:", err)
 	}
-
-	if err := f.watch(); err != nil {
-		log.Fatal("error watching file:", err)
-	}
+	return f
 }
 
-func (f *FileWatcher) watch() error {
+func (f *FileWatcher) Watch() {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		return err
+		log.Fatal("error creating watcher:", err)
 	}
 	defer watcher.Close()
 
 	err = watcher.Add(f.filename)
 	if err != nil {
-		return err
+		log.Fatal("error adding file to watcher:", err)
 	}
 
 	for {

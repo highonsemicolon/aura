@@ -13,8 +13,9 @@ import (
 var fw *services.FileWatcher
 
 func init() {
-	fw = services.NewFileWatcher("./privileges.yml")
-	go fw.Start()
+	fw = services.NewFileWatcher("./privileges.yml").Load()
+	go fw.Watch()
+}
 
 }
 
