@@ -102,7 +102,7 @@ help:
 ensure-tools:
 	@echo "Ensuring required tools are installed..."
 	@command -v golangci-lint > /dev/null || { echo "Installing golangci-lint..."; go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; }
-	@command -v yamllint > /dev/null || { echo "Installing yamllint..."; go install github.com/google/yamlfmt/cmd/yamlfmt@latest; }
+	@command -v yamlfmt > /dev/null || { echo "Installing yamllint..."; go install github.com/google/yamlfmt/cmd/yamlfmt@latest; }
 
 ensure-dev-tools:
 	@echo "Ensuring required dev tools are installed..."
