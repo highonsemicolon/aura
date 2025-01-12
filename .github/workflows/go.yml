@@ -31,7 +31,7 @@ jobs:
           make ensure-tools
       - name: Run Makefile targets
         run: |
-          make ci  # This runs fmt, lint, and test from the Makefile
+          make ci  # This runs fmt, lint from the Makefile
   test:
     runs-on: ubuntu-latest
     steps:
