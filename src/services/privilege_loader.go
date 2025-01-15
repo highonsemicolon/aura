@@ -3,6 +3,7 @@ package services
 import (
 	"aura/src/utils"
 	"sync"
+	"sync/atomic"
 )
 
 type ReadOnlyMap interface {
@@ -12,15 +13,16 @@ type ReadOnlyMap interface {
 
 type PrivilegeLoader struct {
 	filename                 string
-	effectivePrivilegesCache *sync.Map
-	cacheMutex               sync.Mutex
+	effectivePrivilegesCache atomic.Pointer[sync.Map]
 }
 
 func NewPrivilegeLoader(filename string) *PrivilegeLoader {
-	return &PrivilegeLoader{
-		filename:                 filename,
-		effectivePrivilegesCache: &sync.Map{},
+	pl := PrivilegeLoader{
+		filename: filename,
 	}
+
+	pl.effectivePrivilegesCache.Store(&sync.Map{})
+	return &pl
 }
 
 func (pl *PrivilegeLoader) LoadAndComputePrivileges() error {
@@ -33,34 +35,25 @@ func (pl *PrivilegeLoader) LoadAndComputePrivileges() error {
 }
 
 func (pl *PrivilegeLoader) computeEffectivePrivileges(privileges *utils.RolePrivileges) {
-	var newPrivileges sync.Map
+	newPrivileges := &sync.Map{}
 	for role := range privileges.Roles {
 		effective := utils.ComputeRolePrivilegesDFS(role, privileges, make(map[string]bool))
 		newPrivileges.Store(role, effective)
 	}
 
-	pl.cacheMutex.Lock()
-	defer pl.cacheMutex.Unlock()
-
-	pl.effectivePrivilegesCache.Range(func(key, value interface{}) bool {
-		pl.effectivePrivilegesCache.Delete(key)
-		return true
-	})
-	newPrivileges.Range(func(key, value interface{}) bool {
-		pl.effectivePrivilegesCache.Store(key, value)
-		return true
-	})
+	pl.effectivePrivilegesCache.Store(newPrivileges)
 }
 
 func (pl *PrivilegeLoader) GetEffectivePrivileges(role string) ([]string, bool) {
 
-	privileges, ok := pl.effectivePrivilegesCache.Load(role)
+	effectivePrivileges := pl.effectivePrivilegesCache.Load()
+	privileges, ok := effectivePrivileges.Load(role)
 	if !ok {
 		return nil, false
 	}
 	return privileges.([]string), true
 }
 
-func (pl *PrivilegeLoader) GetEffectivePrivilegesCache() ReadOnlyMap {
-	return pl.effectivePrivilegesCache
+func (pl *PrivilegeLoader) GetEffectivePrivilegesCache() *sync.Map {
+	return pl.effectivePrivilegesCache.Load()
 }
