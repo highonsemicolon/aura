@@ -6,6 +6,11 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
+type ReadOnlyMap interface {
+	Load(key interface{}) (value interface{}, ok bool)
+	Range(f func(key, value interface{}) bool)
+}
+
 type FileWatcher struct {
 	filename        string
 	privilegeLoader *PrivilegeLoader

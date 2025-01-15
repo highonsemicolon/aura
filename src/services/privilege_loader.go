@@ -6,11 +6,6 @@ import (
 	"sync/atomic"
 )
 
-type ReadOnlyMap interface {
-	Load(key interface{}) (value interface{}, ok bool)
-	Range(f func(key, value interface{}) bool)
-}
-
 type PrivilegeLoader struct {
 	filename                 string
 	effectivePrivilegesCache atomic.Pointer[sync.Map]
