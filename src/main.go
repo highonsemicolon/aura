@@ -1,8 +1,6 @@
 package main
 
 import (
-	"time"
-
 	"aura/src/services"
 )
 
@@ -17,13 +15,9 @@ func main() {
 	// r := gin.Default()
 	// r.Use(middleware.UserIDMiddleware)
 
-	// time.Sleep(2 * time.Second)
-
-	var mp = fw.GetEffectivePrivilegesCache()
-
 	for {
-		println(services.IsActionAllowed("editor", "read", mp))
-		time.Sleep(2 * time.Second)
+		println(services.IsActionAllowed("editor", "read", fw))
+		// time.Sleep(1 * time.Second)
 	}
 
 	// for {
