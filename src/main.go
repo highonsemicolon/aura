@@ -1,6 +1,6 @@
 package main
 
-import services "aura/src/services/privilege"
+import services "aura/src/services/role"
 
 var fw *services.FileWatcher
 
@@ -11,7 +11,6 @@ func init() {
 
 func main() {
 	// r := gin.Default()
-	// r.Use(middleware.UserIDMiddleware)
 
 	for {
 		println(services.IsActionAllowed("editor", "read", fw))
