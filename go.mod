@@ -7,7 +7,7 @@ require (
 	github.com/fsnotify/fsnotify v1.8.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-playground/validator/v10 v10.20.0
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
