@@ -1,8 +1,6 @@
 package main
 
-import (
-	"aura/src/services"
-)
+import services "aura/src/services/privilege"
 
 var fw *services.FileWatcher
 
