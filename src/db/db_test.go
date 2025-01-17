@@ -23,7 +23,7 @@ func TestAssignRole_Success(t *testing.T) {
 	_, mock, sqlDB := setupMockDB(t)
 	defer sqlDB.Close()
 
-	mock.ExpectExec(regexp.QuoteMeta(assignRoleQuery)).
+	mock.ExpectExec(regexp.QuoteMeta(addRoleQuery)).
 		WithArgs("user-uuid", "admin", "resource-uuid").
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -45,7 +45,7 @@ func TestAssignRole_DBError(t *testing.T) {
 	_, mock, sqlDB := setupMockDB(t)
 	defer sqlDB.Close()
 
-	mock.ExpectExec(regexp.QuoteMeta(assignRoleQuery)).
+	mock.ExpectExec(regexp.QuoteMeta(addRoleQuery)).
 		WithArgs("user-uuid", "admin", "resource-uuid").
 		WillReturnError(errors.New("database error"))
 
@@ -59,7 +59,7 @@ func TestRemoveRole_Success(t *testing.T) {
 	_, mock, sqlDB := setupMockDB(t)
 	defer sqlDB.Close()
 
-	mock.ExpectExec(regexp.QuoteMeta(removeRoleQuery)).
+	mock.ExpectExec(regexp.QuoteMeta(deleteRoleQuery)).
 		WithArgs("user-uuid", "resource-uuid").
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
@@ -81,7 +81,7 @@ func TestRemoveRole_NoRowsAffected(t *testing.T) {
 	_, mock, sqlDB := setupMockDB(t)
 	defer sqlDB.Close()
 
-	mock.ExpectExec(regexp.QuoteMeta(removeRoleQuery)).
+	mock.ExpectExec(regexp.QuoteMeta(deleteRoleQuery)).
 		WithArgs("user-uuid", "resource-uuid").
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
@@ -94,7 +94,7 @@ func TestRemoveRole_DBError(t *testing.T) {
 	_, mock, sqlDB := setupMockDB(t)
 	defer sqlDB.Close()
 
-	mock.ExpectExec(regexp.QuoteMeta(removeRoleQuery)).
+	mock.ExpectExec(regexp.QuoteMeta(deleteRoleQuery)).
 		WithArgs("user-uuid", "resource-uuid").
 		WillReturnError(errors.New("database error"))
 
@@ -108,7 +108,7 @@ func TestGetRole_Success(t *testing.T) {
 	defer sqlDB.Close()
 
 	rows := sqlmock.NewRows([]string{"role"}).AddRow("admin")
-	mock.ExpectQuery(regexp.QuoteMeta(getRoleQuery)).
+	mock.ExpectQuery(regexp.QuoteMeta(selectRoleQuery)).
 		WithArgs("user-uuid", "resource-uuid").
 		WillReturnRows(rows)
 
@@ -131,7 +131,7 @@ func TestGetRole_NoRows(t *testing.T) {
 	_, mock, sqlDB := setupMockDB(t)
 	defer sqlDB.Close()
 
-	mock.ExpectQuery(regexp.QuoteMeta(getRoleQuery)).
+	mock.ExpectQuery(regexp.QuoteMeta(selectRoleQuery)).
 		WithArgs("user-uuid", "resource-uuid").
 		WillReturnRows(sqlmock.NewRows([]string{"role"}))
 
@@ -145,7 +145,7 @@ func TestGetRole_DBError(t *testing.T) {
 	_, mock, sqlDB := setupMockDB(t)
 	defer sqlDB.Close()
 
-	mock.ExpectQuery(regexp.QuoteMeta(getRoleQuery)).
+	mock.ExpectQuery(regexp.QuoteMeta(selectRoleQuery)).
 		WithArgs("user-uuid", "resource-uuid").
 		WillReturnError(errors.New("database error"))
 

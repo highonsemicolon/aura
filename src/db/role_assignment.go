@@ -26,7 +26,7 @@ func (db *sqlDB) AssignRole(userID, role, resourceID string) error {
 		return err
 	}
 
-	_, err := db.conn.Exec(assignRoleQuery, userID, role, resourceID)
+	_, err := db.conn.Exec(addRoleQuery, userID, role, resourceID)
 	if err != nil {
 		return fmt.Errorf("failed to assign role: %w", err)
 	}
@@ -40,7 +40,7 @@ func (db *sqlDB) RemoveRole(userID, resourceID string) error {
 		return err
 	}
 
-	_, err := db.conn.Exec(removeRoleQuery, userID, resourceID)
+	_, err := db.conn.Exec(deleteRoleQuery, userID, resourceID)
 	if err != nil {
 		return fmt.Errorf("failed to remove role: %w", err)
 	}
@@ -54,7 +54,7 @@ func (db *sqlDB) GetRole(userID, resourceID string) (string, error) {
 	}
 
 	var role string
-	err := db.conn.QueryRow(getRoleQuery, userID, resourceID).Scan(&role)
+	err := db.conn.QueryRow(selectRoleQuery, userID, resourceID).Scan(&role)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return "", nil
