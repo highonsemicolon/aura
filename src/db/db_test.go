@@ -12,13 +12,10 @@ import (
 )
 
 type testCase struct {
-	name           string
-	userID         string
-	resourceID     string
-	role           string
-	mockSetup      func(mock sqlmock.Sqlmock)
-	expectedError  string
-	expectedResult string
+	name, userID, resourceID, role string
+	mockSetup                      func(mock sqlmock.Sqlmock)
+	expectedError                  error
+	expectedResult                 string
 }
 
 func setupTest(t *testing.T) (*sql.DB, sqlmock.Sqlmock, DB, func()) {
@@ -52,7 +49,7 @@ func TestAssignRole(t *testing.T) {
 			userID:        "",
 			resourceID:    "resource-uuid",
 			role:          "admin",
-			expectedError: "invalid input",
+			expectedError: errors.New("invalid input"),
 		},
 		{
 			name:       "database error",
@@ -64,7 +61,7 @@ func TestAssignRole(t *testing.T) {
 					WithArgs("user-uuid", "admin", "resource-uuid").
 					WillReturnError(errors.New("database error"))
 			},
-			expectedError: "failed to assign role",
+			expectedError: errors.New("failed to assign role"),
 		},
 	}
 
@@ -78,9 +75,9 @@ func TestAssignRole(t *testing.T) {
 			}
 
 			err := db.AssignRole(tt.userID, tt.role, tt.resourceID)
-			if tt.expectedError != "" {
+			if tt.expectedError != nil {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedError)
+				assert.Contains(t, err.Error(), tt.expectedError.Error())
 			} else {
 				assert.NoError(t, err)
 			}
@@ -106,7 +103,7 @@ func TestGetRole(t *testing.T) {
 			name:          "invalid input - empty userID",
 			userID:        "",
 			resourceID:    "resource-uuid",
-			expectedError: "invalid input",
+			expectedError: errors.New("invalid input"),
 		},
 		{
 			name:       "no rows",
@@ -128,7 +125,7 @@ func TestGetRole(t *testing.T) {
 					WithArgs("user-uuid", "resource-uuid").
 					WillReturnError(errors.New("database error"))
 			},
-			expectedError: "failed to get role",
+			expectedError: errors.New("failed to get role"),
 		},
 	}
 
@@ -142,9 +139,9 @@ func TestGetRole(t *testing.T) {
 			}
 
 			role, err := db.GetRole(tt.userID, tt.resourceID)
-			if tt.expectedError != "" {
+			if tt.expectedError != nil {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedError)
+				assert.Contains(t, err.Error(), tt.expectedError.Error())
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.expectedResult, role)
@@ -169,7 +166,7 @@ func TestRemoveRole(t *testing.T) {
 			name:          "invalid input - empty userID",
 			userID:        "",
 			resourceID:    "resource-uuid",
-			expectedError: "invalid input",
+			expectedError: errors.New("invalid input"),
 		},
 		{
 			name:       "no rows affected",
@@ -190,7 +187,7 @@ func TestRemoveRole(t *testing.T) {
 					WithArgs("user-uuid", "resource-uuid").
 					WillReturnError(errors.New("database error"))
 			},
-			expectedError: "failed to remove role",
+			expectedError: errors.New("failed to remove role"),
 		},
 	}
 
@@ -204,9 +201,9 @@ func TestRemoveRole(t *testing.T) {
 			}
 
 			err := db.RemoveRole(tt.userID, tt.resourceID)
-			if tt.expectedError != "" {
+			if tt.expectedError != nil {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedError)
+				assert.Contains(t, err.Error(), tt.expectedError.Error())
 			} else {
 				assert.NoError(t, err)
 			}
