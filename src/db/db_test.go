@@ -8,149 +8,208 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func setupMockDB(t *testing.T) (*sql.DB, sqlmock.Sqlmock, DB) {
+type testCase struct {
+	name           string
+	userID         string
+	resourceID     string
+	role           string
+	mockSetup      func(mock sqlmock.Sqlmock)
+	expectedError  string
+	expectedResult string
+}
+
+func setupTest(t *testing.T) (*sql.DB, sqlmock.Sqlmock, DB, func()) {
 	dbConn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to open mock DB connection: %v", err)
-	}
+	require.NoError(t, err, "Failed to open mock DB connection")
+
 	sqlDB := NewDB(dbConn)
-	return dbConn, mock, sqlDB
+	cleanup := func() {
+		sqlDB.Close()
+		require.NoError(t, mock.ExpectationsWereMet(), "DB expectations not met")
+	}
+
+	return dbConn, mock, sqlDB, cleanup
 }
 
-func TestAssignRole_Success(t *testing.T) {
-	_, mock, sqlDB := setupMockDB(t)
-	defer sqlDB.Close()
+func TestAssignRole(t *testing.T) {
+	tests := []testCase{
+		{
+			name:       "success",
+			userID:     "user-uuid",
+			resourceID: "resource-uuid",
+			role:       "admin",
+			mockSetup: func(mock sqlmock.Sqlmock) {
+				mock.ExpectExec(regexp.QuoteMeta(addRoleQuery)).
+					WithArgs("user-uuid", "admin", "resource-uuid").
+					WillReturnResult(sqlmock.NewResult(1, 1))
+			},
+		},
+		{
+			name:          "invalid input - empty userID",
+			userID:        "",
+			resourceID:    "resource-uuid",
+			role:          "admin",
+			expectedError: "invalid input",
+		},
+		{
+			name:       "database error",
+			userID:     "user-uuid",
+			resourceID: "resource-uuid",
+			role:       "admin",
+			mockSetup: func(mock sqlmock.Sqlmock) {
+				mock.ExpectExec(regexp.QuoteMeta(addRoleQuery)).
+					WithArgs("user-uuid", "admin", "resource-uuid").
+					WillReturnError(errors.New("database error"))
+			},
+			expectedError: "failed to assign role",
+		},
+	}
 
-	mock.ExpectExec(regexp.QuoteMeta(addRoleQuery)).
-		WithArgs("user-uuid", "admin", "resource-uuid").
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, mock, db, cleanup := setupTest(t)
+			defer cleanup()
 
-	err := sqlDB.AssignRole("user-uuid", "admin", "resource-uuid")
-	assert.NoError(t, err)
-	assert.NoError(t, mock.ExpectationsWereMet())
+			if tt.mockSetup != nil {
+				tt.mockSetup(mock)
+			}
+
+			err := db.AssignRole(tt.userID, tt.role, tt.resourceID)
+			if tt.expectedError != "" {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }
 
-func TestAssignRole_InvalidInput(t *testing.T) {
-	_, _, sqlDB := setupMockDB(t)
-	defer sqlDB.Close()
+func TestGetRole(t *testing.T) {
+	tests := []testCase{
+		{
+			name:       "success",
+			userID:     "user-uuid",
+			resourceID: "resource-uuid",
+			mockSetup: func(mock sqlmock.Sqlmock) {
+				rows := sqlmock.NewRows([]string{"role"}).AddRow("admin")
+				mock.ExpectQuery(regexp.QuoteMeta(selectRoleQuery)).
+					WithArgs("user-uuid", "resource-uuid").
+					WillReturnRows(rows)
+			},
+			expectedResult: "admin",
+		},
+		{
+			name:          "invalid input - empty userID",
+			userID:        "",
+			resourceID:    "resource-uuid",
+			expectedError: "invalid input",
+		},
+		{
+			name:       "no rows",
+			userID:     "user-uuid",
+			resourceID: "resource-uuid",
+			mockSetup: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery(regexp.QuoteMeta(selectRoleQuery)).
+					WithArgs("user-uuid", "resource-uuid").
+					WillReturnRows(sqlmock.NewRows([]string{"role"}))
+			},
+			expectedResult: "",
+		},
+		{
+			name:       "database error",
+			userID:     "user-uuid",
+			resourceID: "resource-uuid",
+			mockSetup: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery(regexp.QuoteMeta(selectRoleQuery)).
+					WithArgs("user-uuid", "resource-uuid").
+					WillReturnError(errors.New("database error"))
+			},
+			expectedError: "failed to get role",
+		},
+	}
 
-	err := sqlDB.AssignRole("", "admin", "resource-uuid")
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "invalid input")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, mock, db, cleanup := setupTest(t)
+			defer cleanup()
+
+			if tt.mockSetup != nil {
+				tt.mockSetup(mock)
+			}
+
+			role, err := db.GetRole(tt.userID, tt.resourceID)
+			if tt.expectedError != "" {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedResult, role)
+			}
+		})
+	}
 }
 
-func TestAssignRole_DBError(t *testing.T) {
-	_, mock, sqlDB := setupMockDB(t)
-	defer sqlDB.Close()
+func TestRemoveRole(t *testing.T) {
+	tests := []testCase{
+		{
+			name:       "success",
+			userID:     "user-uuid",
+			resourceID: "resource-uuid",
+			mockSetup: func(mock sqlmock.Sqlmock) {
+				mock.ExpectExec(regexp.QuoteMeta(deleteRoleQuery)).
+					WithArgs("user-uuid", "resource-uuid").
+					WillReturnResult(sqlmock.NewResult(0, 1))
+			},
+		},
+		{
+			name:          "invalid input - empty userID",
+			userID:        "",
+			resourceID:    "resource-uuid",
+			expectedError: "invalid input",
+		},
+		{
+			name:       "no rows affected",
+			userID:     "user-uuid",
+			resourceID: "resource-uuid",
+			mockSetup: func(mock sqlmock.Sqlmock) {
+				mock.ExpectExec(regexp.QuoteMeta(deleteRoleQuery)).
+					WithArgs("user-uuid", "resource-uuid").
+					WillReturnResult(sqlmock.NewResult(0, 0))
+			},
+		},
+		{
+			name:       "database error",
+			userID:     "user-uuid",
+			resourceID: "resource-uuid",
+			mockSetup: func(mock sqlmock.Sqlmock) {
+				mock.ExpectExec(regexp.QuoteMeta(deleteRoleQuery)).
+					WithArgs("user-uuid", "resource-uuid").
+					WillReturnError(errors.New("database error"))
+			},
+			expectedError: "failed to remove role",
+		},
+	}
 
-	mock.ExpectExec(regexp.QuoteMeta(addRoleQuery)).
-		WithArgs("user-uuid", "admin", "resource-uuid").
-		WillReturnError(errors.New("database error"))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, mock, db, cleanup := setupTest(t)
+			defer cleanup()
 
-	err := sqlDB.AssignRole("user-uuid", "admin", "resource-uuid")
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to assign role")
-	assert.NoError(t, mock.ExpectationsWereMet())
-}
+			if tt.mockSetup != nil {
+				tt.mockSetup(mock)
+			}
 
-func TestRemoveRole_Success(t *testing.T) {
-	_, mock, sqlDB := setupMockDB(t)
-	defer sqlDB.Close()
-
-	mock.ExpectExec(regexp.QuoteMeta(deleteRoleQuery)).
-		WithArgs("user-uuid", "resource-uuid").
-		WillReturnResult(sqlmock.NewResult(0, 1))
-
-	err := sqlDB.RemoveRole("user-uuid", "resource-uuid")
-	assert.NoError(t, err)
-	assert.NoError(t, mock.ExpectationsWereMet())
-}
-
-func TestRemoveRole_InvalidInput(t *testing.T) {
-	_, _, sqlDB := setupMockDB(t)
-	defer sqlDB.Close()
-
-	err := sqlDB.RemoveRole("", "resource-uuid")
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "invalid input")
-}
-
-func TestRemoveRole_NoRowsAffected(t *testing.T) {
-	_, mock, sqlDB := setupMockDB(t)
-	defer sqlDB.Close()
-
-	mock.ExpectExec(regexp.QuoteMeta(deleteRoleQuery)).
-		WithArgs("user-uuid", "resource-uuid").
-		WillReturnResult(sqlmock.NewResult(0, 0))
-
-	err := sqlDB.RemoveRole("user-uuid", "resource-uuid")
-	assert.NoError(t, err)
-	assert.NoError(t, mock.ExpectationsWereMet())
-}
-
-func TestRemoveRole_DBError(t *testing.T) {
-	_, mock, sqlDB := setupMockDB(t)
-	defer sqlDB.Close()
-
-	mock.ExpectExec(regexp.QuoteMeta(deleteRoleQuery)).
-		WithArgs("user-uuid", "resource-uuid").
-		WillReturnError(errors.New("database error"))
-
-	err := sqlDB.RemoveRole("user-uuid", "resource-uuid")
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to remove role")
-	assert.NoError(t, mock.ExpectationsWereMet())
-}
-func TestGetRole_Success(t *testing.T) {
-	_, mock, sqlDB := setupMockDB(t)
-	defer sqlDB.Close()
-
-	rows := sqlmock.NewRows([]string{"role"}).AddRow("admin")
-	mock.ExpectQuery(regexp.QuoteMeta(selectRoleQuery)).
-		WithArgs("user-uuid", "resource-uuid").
-		WillReturnRows(rows)
-
-	role, err := sqlDB.GetRole("user-uuid", "resource-uuid")
-	assert.NoError(t, err)
-	assert.Equal(t, "admin", role)
-	assert.NoError(t, mock.ExpectationsWereMet())
-}
-
-func TestGetRole_InvalidInput(t *testing.T) {
-	_, _, sqlDB := setupMockDB(t)
-	defer sqlDB.Close()
-
-	_, err := sqlDB.GetRole("", "resource-uuid")
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "invalid input")
-}
-
-func TestGetRole_NoRows(t *testing.T) {
-	_, mock, sqlDB := setupMockDB(t)
-	defer sqlDB.Close()
-
-	mock.ExpectQuery(regexp.QuoteMeta(selectRoleQuery)).
-		WithArgs("user-uuid", "resource-uuid").
-		WillReturnRows(sqlmock.NewRows([]string{"role"}))
-
-	role, err := sqlDB.GetRole("user-uuid", "resource-uuid")
-	assert.NoError(t, err)
-	assert.Equal(t, "", role)
-	assert.NoError(t, mock.ExpectationsWereMet())
-}
-
-func TestGetRole_DBError(t *testing.T) {
-	_, mock, sqlDB := setupMockDB(t)
-	defer sqlDB.Close()
-
-	mock.ExpectQuery(regexp.QuoteMeta(selectRoleQuery)).
-		WithArgs("user-uuid", "resource-uuid").
-		WillReturnError(errors.New("database error"))
-
-	_, err := sqlDB.GetRole("user-uuid", "resource-uuid")
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to get role")
-	assert.NoError(t, mock.ExpectationsWereMet())
+			err := db.RemoveRole(tt.userID, tt.resourceID)
+			if tt.expectedError != "" {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }
