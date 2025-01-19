@@ -3,6 +3,7 @@ package services
 import (
 	"testing"
 
+	"aura/src/db"
 	role "aura/src/services/role"
 
 	"github.com/stretchr/testify/assert"
@@ -12,10 +13,6 @@ import (
 type MockDB struct {
 	mock.Mock
 }
-
-// func NewMockDB() db.DB {
-// 	return &MockDB{}
-// }
 
 func (m *MockDB) Close() error {
 	return nil
@@ -121,6 +118,100 @@ func TestAssignRole(t *testing.T) {
 				assert.NoError(t, err)
 			}
 			store.AssertExpectations(t)
+		})
+	}
+}
+
+func TestPrivilegeService_RemoveRole(t *testing.T) {
+	tests := []testCase{
+		{
+			name:         "success - owner removing role",
+			assignerID:   "admin-id",
+			targetUserID: "user-id",
+			role:         "editor",
+			resourceID:   "resource-id",
+			setupMock: func(m *MockDB, pc *MockChecker) {
+				m.On("GetRole", "admin-id", "resource-id").Return("owner", nil)
+				pc.On("IsActionAllowed", mock.Anything, mock.Anything).Return(true)
+				m.On("RemoveRole", mock.Anything, mock.Anything).Return(nil)
+			},
+		},
+		{
+			name:          "error - invalid input",
+			assignerID:    "",
+			targetUserID:  "user-id",
+			role:          "editor",
+			resourceID:    "resource-id",
+			setupMock:     nil,
+			expectedError: ErrInvalidInput,
+		},
+		{
+			name:         "error - unauthorized assigner",
+			assignerID:   "editor-id",
+			targetUserID: "user-id",
+			role:         "editor",
+			resourceID:   "resource-id",
+			setupMock: func(m *MockDB, pc *MockChecker) {
+				m.On("GetRole", mock.Anything, mock.Anything).Return("editor", nil)
+				pc.On("IsActionAllowed", mock.Anything, mock.Anything).Return(false)
+
+			},
+			expectedError: ErrUnauthorized,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := new(MockDB)
+			pc := new(MockChecker)
+			service := NewPrivilegeService(pc, store)
+
+			if tt.setupMock != nil {
+				tt.setupMock(store, pc)
+			}
+
+			err := service.RemoveRole(tt.assignerID, tt.targetUserID, tt.resourceID)
+
+			if tt.expectedError != nil {
+				assert.Equal(t, tt.expectedError, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			store.AssertExpectations(t)
+		})
+	}
+}
+
+func TestPrivilegeService_GetRole(t *testing.T) {
+	type fields struct {
+		DB db.DB
+	}
+	type args struct {
+		userID     string
+		resourceID string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    string
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ps := &PrivilegeService{
+				DB: tt.fields.DB,
+			}
+			got, err := ps.GetRole(tt.args.userID, tt.args.resourceID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("PrivilegeService.GetRole() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("PrivilegeService.GetRole() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }

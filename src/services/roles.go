@@ -16,7 +16,7 @@ var (
 
 type PrivilegeServiceInterface interface {
 	AssignRole(assignerID, userID, role, resourceID string) error
-	RemoveRole(userID, resourceID string) error
+	RemoveRole(assignerID, userID, resourceID string) error
 	GetRole(userID, resourceID string) (string, error)
 }
 
@@ -30,7 +30,7 @@ func NewPrivilegeService(pc services.PrivilegeChecker, db db.DB) PrivilegeServic
 }
 
 func (ps *PrivilegeService) AssignRole(assignerID, userID, role, resourceID string) error {
-	if err := ps.validateInputs(assignerID, resourceID); err != nil {
+	if err := ps.validateInputs(assignerID, resourceID, userID); err != nil {
 		return err
 	}
 
@@ -50,7 +50,20 @@ func (ps *PrivilegeService) AssignRole(assignerID, userID, role, resourceID stri
 	return ps.DB.AssignRole(userID, role, resourceID)
 }
 
-func (ps *PrivilegeService) RemoveRole(userID, resourceID string) error {
+func (ps *PrivilegeService) RemoveRole(assignerID, userID, resourceID string) error {
+	if err := ps.validateInputs(assignerID, userID, resourceID); err != nil {
+		return err
+	}
+
+	assignerRole, err := ps.GetRole(assignerID, resourceID)
+	if err != nil {
+		return err
+	}
+
+	if !ps.pc.IsActionAllowed(assignerRole, SuperAction) {
+		return ErrUnauthorized
+	}
+
 	return ps.DB.RemoveRole(userID, resourceID)
 }
 
@@ -62,6 +75,7 @@ func (ps *PrivilegeService) validateInputs(input ...string) error {
 	for _, s := range input {
 		if s == "" {
 			return ErrInvalidInput
+		}
 	}
 	return nil
 }
