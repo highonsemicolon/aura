@@ -17,7 +17,7 @@ var (
 type PrivilegeServiceInterface interface {
 	AssignRole(assignerID, userID, role, resourceID string) error
 	RemoveRole(assignerID, userID, resourceID string) error
-	GetRole(userID, resourceID string) (string, error)
+	GetRole(requesterRole, userID, resourceID string) (string, error)
 }
 
 type PrivilegeService struct {
@@ -34,13 +34,9 @@ func (ps *PrivilegeService) AssignRole(assignerID, userID, role, resourceID stri
 		return err
 	}
 
-	assignerRole, err := ps.GetRole(assignerID, resourceID)
+	_, err := ps.GetRole(assignerID, assignerID, resourceID)
 	if err != nil {
 		return err
-	}
-
-	if !ps.pc.IsActionAllowed(assignerRole, SuperAction) {
-		return ErrUnauthorized
 	}
 
 	if !ps.pc.IsRoleAllowed(role) {
@@ -55,19 +51,22 @@ func (ps *PrivilegeService) RemoveRole(assignerID, userID, resourceID string) er
 		return err
 	}
 
-	assignerRole, err := ps.GetRole(assignerID, resourceID)
+	_, err := ps.GetRole(assignerID, assignerID, resourceID)
 	if err != nil {
 		return err
-	}
-
-	if !ps.pc.IsActionAllowed(assignerRole, SuperAction) {
-		return ErrUnauthorized
 	}
 
 	return ps.DB.RemoveRole(userID, resourceID)
 }
 
-func (ps *PrivilegeService) GetRole(userID, resourceID string) (string, error) {
+func (ps *PrivilegeService) GetRole(requesterRole, userID, resourceID string) (string, error) {
+	if err := ps.validateInputs(userID, resourceID); err != nil {
+		return "", err
+	}
+
+	if !ps.pc.IsActionAllowed(requesterRole, SuperAction) {
+		return "", ErrUnauthorized
+	}
 	return ps.DB.GetRole(userID, resourceID)
 }
 

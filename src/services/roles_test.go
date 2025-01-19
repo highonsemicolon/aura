@@ -3,7 +3,6 @@ package services
 import (
 	"testing"
 
-	"aura/src/db"
 	role "aura/src/services/role"
 
 	"github.com/stretchr/testify/assert"
@@ -79,7 +78,7 @@ func TestAssignRole(t *testing.T) {
 			role:         "invalid-role",
 			resourceID:   "resource-id",
 			setupMock: func(m *MockDB, pc *MockChecker) {
-				m.On("GetRole", mock.Anything, mock.Anything).Return("admin", nil)
+				m.On("GetRole", mock.Anything, mock.Anything, mock.Anything).Return("admin", nil)
 				pc.On("IsActionAllowed", mock.Anything, mock.Anything).Return(true)
 				pc.On("IsRoleAllowed", "invalid-role").Return(false)
 
@@ -93,7 +92,6 @@ func TestAssignRole(t *testing.T) {
 			role:         "editor",
 			resourceID:   "resource-id",
 			setupMock: func(m *MockDB, pc *MockChecker) {
-				m.On("GetRole", mock.Anything, mock.Anything).Return("editor", nil)
 				pc.On("IsActionAllowed", mock.Anything, mock.Anything).Return(false)
 
 			},
@@ -152,7 +150,6 @@ func TestPrivilegeService_RemoveRole(t *testing.T) {
 			role:         "editor",
 			resourceID:   "resource-id",
 			setupMock: func(m *MockDB, pc *MockChecker) {
-				m.On("GetRole", mock.Anything, mock.Anything).Return("editor", nil)
 				pc.On("IsActionAllowed", mock.Anything, mock.Anything).Return(false)
 
 			},
@@ -183,35 +180,46 @@ func TestPrivilegeService_RemoveRole(t *testing.T) {
 }
 
 func TestPrivilegeService_GetRole(t *testing.T) {
-	type fields struct {
-		DB db.DB
-	}
-	type args struct {
-		userID     string
-		resourceID string
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    string
-		wantErr bool
-	}{
-		// TODO: Add test cases.
+	tests := []testCase{
+		{
+			name:         "success - get role",
+			assignerID:   "admin-id",
+			targetUserID: "user-id",
+			role:         "editor",
+			resourceID:   "resource-id",
+			setupMock: func(m *MockDB, pc *MockChecker) {
+				m.On("GetRole", "admin-id", "resource-id").Return("owner", nil)
+				pc.On("IsActionAllowed", mock.Anything, mock.Anything).Return(true)
+			},
+		},
+		{
+			name:          "error - invalid input",
+			assignerID:    "",
+			targetUserID:  "user-id",
+			role:          "editor",
+			resourceID:    "resource-id",
+			setupMock:     nil,
+			expectedError: ErrInvalidInput,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ps := &PrivilegeService{
-				DB: tt.fields.DB,
+			store := new(MockDB)
+			pc := new(MockChecker)
+			service := NewPrivilegeService(pc, store)
+
+			if tt.setupMock != nil {
+				tt.setupMock(store, pc)
 			}
-			got, err := ps.GetRole(tt.args.userID, tt.args.resourceID)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("PrivilegeService.GetRole() error = %v, wantErr %v", err, tt.wantErr)
-				return
+
+			_, err := service.GetRole(tt.assignerID, tt.assignerID, tt.resourceID)
+
+			if tt.expectedError != nil {
+				assert.Equal(t, tt.expectedError, err)
+			} else {
+				assert.NoError(t, err)
 			}
-			if got != tt.want {
-				t.Errorf("PrivilegeService.GetRole() = %v, want %v", got, tt.want)
-			}
+			store.AssertExpectations(t)
 		})
 	}
 }
