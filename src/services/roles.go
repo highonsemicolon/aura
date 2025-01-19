@@ -58,9 +58,10 @@ func (ps *PrivilegeService) GetRole(userID, resourceID string) (string, error) {
 	return ps.DB.GetRole(userID, resourceID)
 }
 
-func (ps *PrivilegeService) validateInputs(assignerID, resourceID string) error {
-	if assignerID == "" || resourceID == "" {
-		return ErrInvalidInput
+func (ps *PrivilegeService) validateInputs(input ...string) error {
+	for _, s := range input {
+		if s == "" {
+			return ErrInvalidInput
 	}
 	return nil
 }
