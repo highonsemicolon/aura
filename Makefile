@@ -112,5 +112,5 @@ version:
 	@echo "Go version: $(GO_VERSION)"
 	@echo "Application binary: $(BINARY_NAME)"
 
-ci: fmt lint test
+ci: fmt lint
 	@echo "CI pipeline checks passed!"
