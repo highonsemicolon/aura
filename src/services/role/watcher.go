@@ -11,35 +11,42 @@ type ReadOnlyMap interface {
 	Range(f func(key, value interface{}) bool)
 }
 
-type FileWatcher struct {
-	filename        string
-	privilegeLoader *PrivilegeLoader
+type FileWatcher interface {
+	GetEffectivePrivileges(role string) ([]string, bool)
+	GetEffectivePrivilegesCache() ReadOnlyMap
+	Load() FileWatcher
+	Watch()
 }
 
-func NewFileWatcher(filename string) *FileWatcher {
+type fileWatcher struct {
+	filename        string
+	privilegeLoader *privilegeLoader
+}
+
+func NewFileWatcher(filename string) *fileWatcher {
 	privilegeLoader := NewPrivilegeLoader(filename)
-	return &FileWatcher{
+	return &fileWatcher{
 		filename:        filename,
 		privilegeLoader: privilegeLoader,
 	}
 }
 
-func (f *FileWatcher) GetEffectivePrivileges(role string) ([]string, bool) {
+func (f *fileWatcher) GetEffectivePrivileges(role string) ([]string, bool) {
 	return f.privilegeLoader.GetEffectivePrivileges(role)
 }
 
-func (f *FileWatcher) GetEffectivePrivilegesCache() ReadOnlyMap {
+func (f *fileWatcher) GetEffectivePrivilegesCache() ReadOnlyMap {
 	return f.privilegeLoader.GetEffectivePrivilegesCache()
 }
 
-func (f *FileWatcher) Load() *FileWatcher {
+func (f *fileWatcher) Load() FileWatcher {
 	if err := f.privilegeLoader.LoadAndComputePrivileges(); err != nil {
 		log.Fatal("error loading privileges:", err)
 	}
 	return f
 }
 
-func (f *FileWatcher) Watch() {
+func (f *fileWatcher) Watch() {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatal("error creating watcher:", err)

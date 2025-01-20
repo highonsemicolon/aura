@@ -5,11 +5,12 @@ import (
 	"time"
 )
 
-var fw *services.FileWatcher
+var fw services.FileWatcher
 var pc services.PrivilegeChecker
 
 func init() {
-	fw = services.NewFileWatcher("./privileges.yml").Load()
+	fw = services.NewFileWatcher("./privileges.yml")
+	fw.Load()
 	pc = services.NewChecker(fw)
 
 	go fw.Watch()

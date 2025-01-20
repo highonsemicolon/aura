@@ -20,16 +20,16 @@ type PrivilegeServiceInterface interface {
 	GetRole(requesterRole, userID, resourceID string) (string, error)
 }
 
-type PrivilegeService struct {
+type privilegeService struct {
 	pc services.PrivilegeChecker
 	DB db.DB
 }
 
-func NewPrivilegeService(pc services.PrivilegeChecker, db db.DB) *PrivilegeService {
-	return &PrivilegeService{DB: db, pc: pc}
+func NewPrivilegeService(pc services.PrivilegeChecker, db db.DB) *privilegeService {
+	return &privilegeService{DB: db, pc: pc}
 }
 
-func (ps *PrivilegeService) AssignRole(assignerID, userID, role, resourceID string) error {
+func (ps *privilegeService) AssignRole(assignerID, userID, role, resourceID string) error {
 	if err := ps.validateInputs(assignerID, resourceID, userID); err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func (ps *PrivilegeService) AssignRole(assignerID, userID, role, resourceID stri
 	return ps.DB.AssignRole(userID, role, resourceID)
 }
 
-func (ps *PrivilegeService) RemoveRole(assignerID, userID, resourceID string) error {
+func (ps *privilegeService) RemoveRole(assignerID, userID, resourceID string) error {
 	if err := ps.validateInputs(assignerID, userID, resourceID); err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func (ps *PrivilegeService) RemoveRole(assignerID, userID, resourceID string) er
 	return ps.DB.RemoveRole(userID, resourceID)
 }
 
-func (ps *PrivilegeService) GetRole(requesterRole, userID, resourceID string) (string, error) {
+func (ps *privilegeService) GetRole(requesterRole, userID, resourceID string) (string, error) {
 	if err := ps.validateInputs(userID, resourceID); err != nil {
 		return "", err
 	}
@@ -70,7 +70,7 @@ func (ps *PrivilegeService) GetRole(requesterRole, userID, resourceID string) (s
 	return ps.DB.GetRole(userID, resourceID)
 }
 
-func (ps *PrivilegeService) validateInputs(input ...string) error {
+func (ps *privilegeService) validateInputs(input ...string) error {
 	for _, s := range input {
 		if s == "" {
 			return ErrInvalidInput
