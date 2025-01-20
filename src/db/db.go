@@ -19,7 +19,7 @@ type sqlDB struct {
 	validator *validator.Validate
 }
 
-func NewDB(conn *sql.DB) DB {
+func NewDB(conn *sql.DB) *sqlDB {
 	return &sqlDB{conn: conn, validator: validator.New()}
 }
 

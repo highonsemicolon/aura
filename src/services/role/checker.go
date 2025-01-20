@@ -9,7 +9,7 @@ type Checker struct {
 	fw *FileWatcher
 }
 
-func NewChecker(fw *FileWatcher) PrivilegeChecker {
+func NewChecker(fw *FileWatcher) *Checker {
 	return &Checker{fw: fw}
 }
 

@@ -25,7 +25,7 @@ type PrivilegeService struct {
 	DB db.DB
 }
 
-func NewPrivilegeService(pc services.PrivilegeChecker, db db.DB) PrivilegeServiceInterface {
+func NewPrivilegeService(pc services.PrivilegeChecker, db db.DB) *PrivilegeService {
 	return &PrivilegeService{DB: db, pc: pc}
 }
 
