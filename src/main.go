@@ -1,33 +1,44 @@
 package main
 
 import (
-	services "aura/src/services/role"
-	"time"
+	"aura/src/api"
+	"aura/src/db"
+	"aura/src/middleware"
+	"aura/src/services"
+	"log"
+
+	"github.com/gin-gonic/gin"
+
+	role "aura/src/services/role"
 )
 
-var fw services.FileWatcher
-var pc services.PrivilegeChecker
+var fw role.FileWatcher
+var pc role.PrivilegeChecker
 
 func init() {
-	fw = services.NewFileWatcher("./privileges.yml")
-	fw.Load()
-	pc = services.NewChecker(fw)
+	fw = role.NewFileWatcher("./privileges.yml").Load()
+	pc = role.NewChecker(fw)
 
 	go fw.Watch()
 }
 
 func main() {
-	// r := gin.Default()
+	r := gin.Default()
 
-	for {
-		println(pc.IsActionAllowed("editor", "read"))
-		time.Sleep(1 * time.Second)
-	}
-
-	// api := r.Group("/api")
-	// {
-	// 	api.GET("/policies", handlers.CheckPermission)
+	// for {
+	// 	println(pc.IsActionAllowed("editor", "read"))
+	// 	time.Sleep(1 * time.Second)
 	// }
 
-	// log.Fatal(r.Run(":8080"))
+	r.Use(middleware.UserIDMiddleware)
+
+	repo := db.NewDB(nil)
+	defer repo.Close()
+
+	service := services.NewPrivilegeService(pc, repo)
+	handler := api.NewPrivilegeHandler(service)
+
+	api.Register(r, handler)
+
+	log.Fatal(r.Run(":8080"))
 }
