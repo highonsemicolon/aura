@@ -18,6 +18,7 @@ type PrivilegeServiceInterface interface {
 	AssignRole(assignerID, userID, role, resourceID string) error
 	RemoveRole(assignerID, userID, resourceID string) error
 	GetRole(requesterRole, userID, resourceID string) (string, error)
+	CheckRole(userID, action, resourceID string) (bool, error)
 }
 
 type privilegeService struct {
@@ -27,6 +28,19 @@ type privilegeService struct {
 
 func NewPrivilegeService(pc services.PrivilegeChecker, db db.DB) *privilegeService {
 	return &privilegeService{DB: db, pc: pc}
+}
+
+func (ps *privilegeService) CheckRole(userID, action, resourceID string) (bool, error) {
+	if err := ps.validateInputs(userID, action, resourceID); err != nil {
+		return false, err
+	}
+
+	role, err := ps.DB.GetRole(userID, resourceID)
+	if err != nil {
+		return false, err
+	}
+
+	return ps.pc.IsActionAllowed(role, action), nil
 }
 
 func (ps *privilegeService) AssignRole(assignerID, userID, role, resourceID string) error {
