@@ -20,6 +20,9 @@ type sqlDB struct {
 }
 
 func NewDB(conn *sql.DB) *sqlDB {
+	if err := conn.Ping(); err != nil {
+		panic(err)
+	}
 	return &sqlDB{conn: conn, validator: validator.New()}
 }
 
