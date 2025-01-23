@@ -3,7 +3,6 @@ package main
 import (
 	"aura/src/api"
 	"aura/src/db"
-	"aura/src/middleware"
 	"aura/src/services"
 	"log"
 
@@ -29,8 +28,6 @@ func main() {
 	// 	println(pc.IsActionAllowed("editor", "read"))
 	// 	time.Sleep(1 * time.Second)
 	// }
-
-	r.Use(middleware.UserIDMiddleware)
 
 	repo := db.NewDB(nil)
 	defer repo.Close()
