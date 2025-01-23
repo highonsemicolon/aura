@@ -22,7 +22,7 @@ func setupTest(t *testing.T) (*sql.DB, sqlmock.Sqlmock, DB, func()) {
 	dbConn, mock, err := sqlmock.New()
 	require.NoError(t, err, "Failed to open mock DB connection")
 
-	sqlDB := NewDB(dbConn)
+	sqlDB := NewSqlDB(dbConn)
 	cleanup := func() {
 		sqlDB.Close()
 		require.NoError(t, mock.ExpectationsWereMet(), "DB expectations not met")

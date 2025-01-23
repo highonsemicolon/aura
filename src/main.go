@@ -29,7 +29,7 @@ func main() {
 	// 	time.Sleep(1 * time.Second)
 	// }
 
-	repo := db.NewDB(nil)
+	repo := db.NewSqlDB(nil)
 	defer repo.Close()
 
 	service := services.NewPrivilegeService(pc, repo)

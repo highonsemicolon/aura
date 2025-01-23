@@ -19,7 +19,7 @@ type sqlDB struct {
 	validator *validator.Validate
 }
 
-func NewDB(conn *sql.DB) *sqlDB {
+func NewSqlDB(conn *sql.DB) *sqlDB {
 	if err := conn.Ping(); err != nil {
 		panic(err)
 	}
