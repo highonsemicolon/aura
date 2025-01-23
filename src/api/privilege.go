@@ -42,14 +42,29 @@ func (h *PrivilegeHandler) checkPrivilege(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CheckPrivilegeResponse{Allowed: false})
 }
 
-/*
 func (h *PrivilegeHandler) assignPrivilege(c *gin.Context) {
-	userID := c.GetString("userID")
-	h.valiateInputs(userID)
+	assigner := c.GetString("userID")
+
+	var req dto.AssignPrivilegeRequest
+	if err := c.BindJSON(&req); err != nil {
+		h.writeError(c, http.StatusBadRequest, "bad_request", "Failed to parse request")
+		return
+	}
+
+	if err := h.valiateInputs(assigner, req.User, req.Action, req.Resource); err != nil {
+		h.writeError(c, http.StatusBadRequest, "bad_request", "Invalid input parameters")
+		return
+	}
+
+	if err := h.ps.AssignRole(assigner, req.User, req.Action, req.Resource); err != nil {
+		h.writeError(c, http.StatusInternalServerError, "internal_server_error", err.Error())
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
+/*
 func (h *PrivilegeHandler) revokePrivilege(c *gin.Context) {
 	userID := c.GetString("userID")
 	h.valiateInputs(userID)
