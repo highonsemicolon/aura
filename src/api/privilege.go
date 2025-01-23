@@ -17,15 +17,13 @@ func NewPrivilegeHandler(pc services.PrivilegeServiceInterface) *PrivilegeHandle
 }
 
 func (h *PrivilegeHandler) checkPrivilege(c *gin.Context) {
-	userID := c.GetString("userID")
-
 	var req dto.CheckPrivilegeRequest
 	if err := c.BindJSON(&req); err != nil {
 		h.writeError(c, http.StatusBadRequest, "bad_request", "Failed to parse request")
 		return
 	}
 
-	if err := h.valiateInputs(userID, req.User, req.Action, req.Resource); err != nil {
+	if err := h.valiateInputs(req.User, req.User, req.Action, req.Resource); err != nil {
 		h.writeError(c, http.StatusBadRequest, "bad_request", "Invalid input parameters")
 		return
 	}
