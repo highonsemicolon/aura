@@ -4,6 +4,7 @@ import (
 	"aura/src/api"
 	"aura/src/db"
 	"aura/src/services"
+	"aura/src/utils"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -14,7 +15,11 @@ import (
 var fw role.FileWatcher
 var pc role.PrivilegeChecker
 
+var cfg *utils.Config
+
 func init() {
+
+	cfg = utils.LoadConfig("./config.yml")
 	fw = role.NewFileWatcher("./privileges.yml").Load()
 	pc = role.NewChecker(fw)
 
@@ -22,6 +27,7 @@ func init() {
 }
 
 func main() {
+
 	r := gin.Default()
 
 	// for {
@@ -29,7 +35,7 @@ func main() {
 	// 	time.Sleep(1 * time.Second)
 	// }
 
-	repo := db.NewSqlDB(nil)
+	repo := db.NewSqlDB(cfg.MySQL.DSN, cfg.MySQL.CACertPath)
 	defer repo.Close()
 
 	service := services.NewPrivilegeService(pc, repo)
