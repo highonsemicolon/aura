@@ -1,0 +1,81 @@
+definitions:
+  dto.CheckPrivilegeRequest:
+    properties:
+      action:
+        description: The action the user wants to perform
+        type: string
+      resource:
+        description: The resource the action is performed on
+        type: string
+      user:
+        description: The user whose privileges are being checked
+        type: string
+    type: object
+  dto.CheckPrivilegeResponse:
+    properties:
+      allowed:
+        description: Whether the user is allowed to perform the action
+        type: boolean
+    type: object
+  dto.ErrorResponse:
+    description: Standard error response format used by the API
+    properties:
+      code:
+        description: "@Description\tHTTP status code for the error\n\t@Example\t\t400"
+        type: integer
+      error:
+        description: "@Description\tError type, like \"bad_request\", \"internal_server_error\",
+          etc.\n\t@Example\t\t\"bad_request\""
+        type: string
+      message:
+        description: "@Description\tDetailed error message explaining the issue\n\t@Example\t\t\"Failed
+          to parse request\""
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: onkar.chendage@gmail.com
+    name: Onkar Chendage
+  description: "## About\n\n`aura` is an authorizer created by [Onkar Chendage](https://github.com/highonsemicolon)\n\n-
+    Source Code: <https://github.com/highonsemicolon/aura> \n- API Docs: <http://localhost:8080/docs/index.html> "
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  title: Aura API
+  version: "0.1"
+paths:
+  /check:
+    post:
+      consumes:
+      - application/json
+      description: Checks if a user has the specified action on a resource
+      parameters:
+      - description: Privilege check request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CheckPrivilegeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.CheckPrivilegeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Check user privilege
+      tags:
+      - privilege
+schemes:
+- http
+- https
+swagger: "2.0"

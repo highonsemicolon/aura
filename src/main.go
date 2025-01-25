@@ -7,7 +7,11 @@ import (
 	"aura/src/utils"
 	"log"
 
+	_ "aura/docs"
+
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	role "aura/src/services/role"
 )
@@ -26,9 +30,19 @@ func init() {
 	go fw.Watch()
 }
 
+// @title		Aura API
+// @version	0.1
+// @description.markdown
+// @host			localhost:8080
+// @Schemes		http https
+// @contact.name	Onkar Chendage
+// @contact.email	onkar.chendage@gmail.com
+// @license.name	MIT
+// @license.url	https://opensource.org/licenses/MIT
 func main() {
 
 	r := gin.Default()
+	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// for {
 	// 	println(pc.IsActionAllowed("editor", "read"))
