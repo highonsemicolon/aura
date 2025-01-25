@@ -1,10 +1,14 @@
 package db
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"database/sql"
 	"fmt"
+	"os"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/go-sql-driver/mysql"
 )
 
 type DB interface {
@@ -19,11 +23,23 @@ type sqlDB struct {
 	validator *validator.Validate
 }
 
-func NewSqlDB(conn *sql.DB) *sqlDB {
-	if err := conn.Ping(); err != nil {
-		panic(err)
+func NewSqlDB(dsn, CACertPath string) *sqlDB {
+
+	if CACertPath != "" {
+		if err := setupTLSConfig(CACertPath); err != nil {
+			panic(fmt.Errorf("TLS setup failed for CA Cert '%s': %w", CACertPath, err))
+		}
 	}
-	return &sqlDB{conn: conn, validator: validator.New()}
+
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		panic(fmt.Errorf("failed to open DB connection: %w", err))
+	}
+
+	if err := db.Ping(); err != nil {
+		panic(fmt.Errorf("failed to ping DB: %w", err))
+	}
+	return &sqlDB{conn: db, validator: validator.New()}
 }
 
 func (db *sqlDB) Close() error {
@@ -33,6 +49,26 @@ func (db *sqlDB) Close() error {
 func (db *sqlDB) validateInput(input interface{}) error {
 	if err := db.validator.Struct(input); err != nil {
 		return fmt.Errorf("invalid input: %w", err)
+	}
+	return nil
+}
+
+func setupTLSConfig(CACertPath string) error {
+	caCert, err := os.ReadFile(CACertPath)
+	if err != nil {
+		return fmt.Errorf("failed to read CA certificate file at '%s': %w", CACertPath, err)
+	}
+
+	rootCertPool := x509.NewCertPool()
+	if ok := rootCertPool.AppendCertsFromPEM(caCert); !ok {
+		return fmt.Errorf("failed to append CA certificate from '%s'", CACertPath)
+	}
+
+	tlsConfig := &tls.Config{
+		RootCAs: rootCertPool,
+	}
+	if err := mysql.RegisterTLSConfig("custom", tlsConfig); err != nil {
+		return fmt.Errorf("failed to register TLS config: %w", err)
 	}
 	return nil
 }
