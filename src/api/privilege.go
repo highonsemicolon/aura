@@ -57,17 +57,17 @@ func (h *PrivilegeHandler) checkPrivilege(c *gin.Context) {
 
 // assignPrivilege assigns a privilege to a user.
 //
-// @Summary      Assign privilege
-// @Description  Allows an assigner to assign a privilege to a user
-// @Tags         privileges
-// @Accept       json
-// @Produce      json
-// @Param        userID      header    string                          true  "Assigner's User ID"
-// @Param        body        body      dto.AssignPrivilegeRequest      true  "Request payload to assign privilege"
-// @Success      201         {object}  dto.AssignPrivilegeResponse          "Successfully assigned privilege"
-// @Failure      400         {object}  dto.AssignPrivilegeResponse          "Invalid input or bad request"
-// @Failure      403         {object}  dto.ErrorResponse          "Unauthorised to perform this action"
-// @Router       /privileges/assign [post]
+//	@Summary		Assign privilege
+//	@Description	Allows an assigner to assign a privilege to a user
+//	@Tags			privileges
+//	@Accept			json
+//	@Produce		json
+//	@Param			userID	header		string						true	"Assigner's User ID"
+//	@Param			body	body		dto.AssignPrivilegeRequest	true	"Request payload to assign privilege"
+//	@Success		201		{object}	dto.AssignPrivilegeResponse	"Successfully assigned privilege"
+//	@Failure		400		{object}	dto.AssignPrivilegeResponse	"Invalid input or bad request"
+//	@Failure		403		{object}	dto.ErrorResponse			"Unauthorised to perform this action"
+//	@Router			/privileges/assign [post]
 func (h *PrivilegeHandler) assignPrivilege(c *gin.Context) {
 	assigner := c.GetString("userID")
 
