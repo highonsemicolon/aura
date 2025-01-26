@@ -19,16 +19,16 @@ func NewPrivilegeHandler(pc services.PrivilegeServiceInterface) *PrivilegeHandle
 
 // checkPrivilege checks if a user has permission to perform a specific action
 //
-//	@Summary		Check user privilege
-//	@Description	Checks if a user has the specified action on a resource
-//	@Tags			privileges
+//	@Summary		Check user aura
+//	@Description	Checks if a user is allowed to perform specified action on a resource
+//	@Tags			aura
 //	@Accept			json
 //	@Produce		json
 //	@Param			request	body		dto.CheckPrivilegeRequest	true	"Privilege check request"
 //	@Success		200		{object}	dto.CheckPrivilegeResponse
 //	@Failure		400		{object}	dto.ErrorResponse
 //	@Failure		500		{object}	dto.ErrorResponse
-//	@Router			/check [post]
+//	@Router			/aura/check [post]
 func (h *PrivilegeHandler) checkPrivilege(c *gin.Context) {
 	var req dto.CheckPrivilegeRequest
 	if err := c.BindJSON(&req); err != nil {
@@ -57,9 +57,9 @@ func (h *PrivilegeHandler) checkPrivilege(c *gin.Context) {
 
 // assignPrivilege assigns a privilege to a user.
 //
-//	@Summary		Assign privilege
-//	@Description	Allows an assigner to assign a privilege to a user
-//	@Tags			privileges
+//	@Summary		Assign aura
+//	@Description	Allows an assigner to assign a aura to a user
+//	@Tags			aura
 //	@Accept			json
 //	@Produce		json
 //	@Param			userID	header		string						true	"Assigner's User ID"
@@ -67,7 +67,7 @@ func (h *PrivilegeHandler) checkPrivilege(c *gin.Context) {
 //	@Success		201		{object}	dto.AssignPrivilegeResponse	"Successfully assigned privilege"
 //	@Failure		400		{object}	dto.AssignPrivilegeResponse	"Invalid input or bad request"
 //	@Failure		403		{object}	dto.ErrorResponse			"Unauthorised to perform this action"
-//	@Router			/privileges/assign [post]
+//	@Router			/aura [post]
 func (h *PrivilegeHandler) assignPrivilege(c *gin.Context) {
 	assigner := c.GetString("userID")
 

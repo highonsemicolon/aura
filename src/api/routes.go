@@ -10,7 +10,7 @@ func Register(router *gin.Engine, h *PrivilegeHandler) {
 
 	useridMiddleware := middleware.UserIDMiddleware
 
-	router.POST("/check", h.checkPrivilege)
-	router.POST("/role", useridMiddleware, h.assignPrivilege)
+	router.POST("aura", useridMiddleware, h.assignPrivilege)
+	router.POST("aura/check", h.checkPrivilege)
 	// router.DELETE(("role"), h.revokePrivilege)
 }

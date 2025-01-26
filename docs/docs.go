@@ -22,9 +22,9 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/check": {
+        "/aura": {
             "post": {
-                "description": "Checks if a user has the specified action on a resource",
+                "description": "Allows an assigner to assign a aura to a user",
                 "consumes": [
                     "application/json"
                 ],
@@ -32,55 +32,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "privileges"
+                    "aura"
                 ],
-                "summary": "Check user privilege",
-                "parameters": [
-                    {
-                        "description": "Privilege check request",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.CheckPrivilegeRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.CheckPrivilegeResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/privileges/assign": {
-            "post": {
-                "description": "Allows an assigner to assign a privilege to a user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "privileges"
-                ],
-                "summary": "Assign privilege",
+                "summary": "Assign aura",
                 "parameters": [
                     {
                         "type": "string",
@@ -114,6 +68,52 @@ const docTemplate = `{
                     },
                     "403": {
                         "description": "Unauthorised to perform this action",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/aura/check": {
+            "post": {
+                "description": "Checks if a user is allowed to perform specified action on a resource",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "aura"
+                ],
+                "summary": "Check user aura",
+                "parameters": [
+                    {
+                        "description": "Privilege check request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CheckPrivilegeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CheckPrivilegeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/dto.ErrorResponse"
                         }

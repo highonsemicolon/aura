@@ -59,41 +59,11 @@ info:
   title: Aura API
   version: "0.1"
 paths:
-  /check:
+  /aura:
     post:
       consumes:
       - application/json
-      description: Checks if a user has the specified action on a resource
-      parameters:
-      - description: Privilege check request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.CheckPrivilegeRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.CheckPrivilegeResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-      summary: Check user privilege
-      tags:
-      - privileges
-  /privileges/assign:
-    post:
-      consumes:
-      - application/json
-      description: Allows an assigner to assign a privilege to a user
+      description: Allows an assigner to assign a aura to a user
       parameters:
       - description: Assigner's User ID
         in: header
@@ -121,9 +91,39 @@ paths:
           description: Unauthorised to perform this action
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
-      summary: Assign privilege
+      summary: Assign aura
       tags:
-      - privileges
+      - aura
+  /aura/check:
+    post:
+      consumes:
+      - application/json
+      description: Checks if a user is allowed to perform specified action on a resource
+      parameters:
+      - description: Privilege check request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CheckPrivilegeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.CheckPrivilegeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Check user aura
+      tags:
+      - aura
 schemes:
 - http
 - https
