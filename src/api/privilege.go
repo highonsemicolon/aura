@@ -57,11 +57,12 @@ func (h *PrivilegeHandler) assignPrivilege(c *gin.Context) {
 	}
 
 	if err := h.ps.AssignRole(assigner, req.User, req.Action, req.Resource); err != nil {
-		h.writeError(c, http.StatusInternalServerError, "internal_server_error", err.Error())
+		h.writeError(c, http.StatusForbidden, "unauthorised",err.Error())
+		log.Println(err)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"success": true})
+	h.writeJSON(c, http.StatusCreated, dto.AssignPrivilegeResponse{Success: true})
 }
 
 /*
