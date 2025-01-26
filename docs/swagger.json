@@ -29,7 +29,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "privilege"
+                    "privileges"
                 ],
                 "summary": "Check user privilege",
                 "parameters": [
@@ -64,9 +64,84 @@
                     }
                 }
             }
+        },
+        "/privileges/assign": {
+            "post": {
+                "description": "Allows an assigner to assign a privilege to a user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "privileges"
+                ],
+                "summary": "Assign privilege",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Assigner's User ID",
+                        "name": "userID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Request payload to assign privilege",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.AssignPrivilegeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully assigned privilege",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AssignPrivilegeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input or bad request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AssignPrivilegeResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Unauthorised to perform this action",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "dto.AssignPrivilegeRequest": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "resource": {
+                    "type": "string"
+                },
+                "user": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.AssignPrivilegeResponse": {
+            "type": "object",
+            "properties": {
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
         "dto.CheckPrivilegeRequest": {
             "type": "object",
             "properties": {

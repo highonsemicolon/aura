@@ -1,4 +1,18 @@
 definitions:
+  dto.AssignPrivilegeRequest:
+    properties:
+      action:
+        type: string
+      resource:
+        type: string
+      user:
+        type: string
+    type: object
+  dto.AssignPrivilegeResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
   dto.CheckPrivilegeRequest:
     properties:
       action:
@@ -74,7 +88,42 @@ paths:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Check user privilege
       tags:
-      - privilege
+      - privileges
+  /privileges/assign:
+    post:
+      consumes:
+      - application/json
+      description: Allows an assigner to assign a privilege to a user
+      parameters:
+      - description: Assigner's User ID
+        in: header
+        name: userID
+        required: true
+        type: string
+      - description: Request payload to assign privilege
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AssignPrivilegeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully assigned privilege
+          schema:
+            $ref: '#/definitions/dto.AssignPrivilegeResponse'
+        "400":
+          description: Invalid input or bad request
+          schema:
+            $ref: '#/definitions/dto.AssignPrivilegeResponse'
+        "403":
+          description: Unauthorised to perform this action
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Assign privilege
+      tags:
+      - privileges
 schemes:
 - http
 - https

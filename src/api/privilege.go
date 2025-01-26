@@ -3,6 +3,7 @@ package api
 import (
 	"aura/src/api/dto"
 	services "aura/src/services"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -16,6 +17,18 @@ func NewPrivilegeHandler(pc services.PrivilegeServiceInterface) *PrivilegeHandle
 	return &PrivilegeHandler{pc}
 }
 
+// checkPrivilege checks if a user has permission to perform a specific action
+//
+//	@Summary		Check user privilege
+//	@Description	Checks if a user has the specified action on a resource
+//	@Tags			privileges
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		dto.CheckPrivilegeRequest	true	"Privilege check request"
+//	@Success		200		{object}	dto.CheckPrivilegeResponse
+//	@Failure		400		{object}	dto.ErrorResponse
+//	@Failure		500		{object}	dto.ErrorResponse
+//	@Router			/check [post]
 func (h *PrivilegeHandler) checkPrivilege(c *gin.Context) {
 	var req dto.CheckPrivilegeRequest
 	if err := c.BindJSON(&req); err != nil {
@@ -42,6 +55,19 @@ func (h *PrivilegeHandler) checkPrivilege(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CheckPrivilegeResponse{Allowed: false})
 }
 
+// assignPrivilege assigns a privilege to a user.
+//
+// @Summary      Assign privilege
+// @Description  Allows an assigner to assign a privilege to a user
+// @Tags         privileges
+// @Accept       json
+// @Produce      json
+// @Param        userID      header    string                          true  "Assigner's User ID"
+// @Param        body        body      dto.AssignPrivilegeRequest      true  "Request payload to assign privilege"
+// @Success      201         {object}  dto.AssignPrivilegeResponse          "Successfully assigned privilege"
+// @Failure      400         {object}  dto.AssignPrivilegeResponse          "Invalid input or bad request"
+// @Failure      403         {object}  dto.ErrorResponse          "Unauthorised to perform this action"
+// @Router       /privileges/assign [post]
 func (h *PrivilegeHandler) assignPrivilege(c *gin.Context) {
 	assigner := c.GetString("userID")
 
@@ -57,7 +83,7 @@ func (h *PrivilegeHandler) assignPrivilege(c *gin.Context) {
 	}
 
 	if err := h.ps.AssignRole(assigner, req.User, req.Action, req.Resource); err != nil {
-		h.writeError(c, http.StatusForbidden, "unauthorised",err.Error())
+		h.writeError(c, http.StatusForbidden, "unauthorised", err.Error())
 		log.Println(err)
 		return
 	}
