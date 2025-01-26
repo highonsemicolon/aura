@@ -103,6 +103,7 @@ ensure-tools:
 	@echo "Ensuring required tools are installed..."
 	@command -v golangci-lint > /dev/null || { echo "Installing golangci-lint..."; go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; }
 	@command -v yamlfmt > /dev/null || { echo "Installing yamllint..."; go install github.com/google/yamlfmt/cmd/yamlfmt@latest; }
+	@command -v go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest > /dev/null || { echo "Installing golang-migrate..."; go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest; }
 
 ensure-dev-tools:
 	@echo "Ensuring required dev tools are installed..."
