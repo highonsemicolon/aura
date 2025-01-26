@@ -32,7 +32,7 @@ fmt:
 lint:
 	@echo "Running linter..."
 	golangci-lint run
-	@yamlfmt .
+	swag fmt 
 
 # ---- Test Targets ----
 
