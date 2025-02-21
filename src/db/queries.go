@@ -8,4 +8,6 @@ const (
 		DO UPDATE SET role = $2`
 	deleteRoleQuery = `DELETE FROM role_assignments WHERE user_id = $1 AND resource_id = $2`
 	selectRoleQuery = `SELECT role FROM role_assignments WHERE user_id = $1 AND resource_id = $2`
+
+	getResourceQuery = `SELECT EXISTS(SELECT 1 FROM resources WHERE id = $1)`
 )

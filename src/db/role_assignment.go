@@ -63,3 +63,13 @@ func (db *sqlDB) GetRole(userID, resourceID string) (string, error) {
 	}
 	return role, err
 }
+
+
+func (db *sqlDB) CheckIfResourceExists(resourceID string) (bool, error) {
+	var exists bool
+	err := db.conn.QueryRow(getResourceQuery, resourceID).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("failed to check resource: %w", err)
+	}
+	return exists, nil
+}

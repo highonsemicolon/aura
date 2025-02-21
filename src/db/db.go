@@ -15,6 +15,7 @@ type DB interface {
 	AssignRole(userID, role, resourceID string) error
 	RemoveRole(userID, resourceID string) error
 	GetRole(userID, resourceID string) (string, error)
+	CheckIfResourceExists(string) (bool, error)
 	Close() error
 }
 

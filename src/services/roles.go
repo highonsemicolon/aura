@@ -9,6 +9,7 @@ import (
 
 var (
 	SuperAction       = "assign"
+	SuperRole         = "owner"
 	ErrInvalidInput   = errors.New("invalid input parameters")
 	ErrRoleNotAllowed = errors.New("role not allowed")
 	ErrUnauthorized   = errors.New("unauthorized to perform this action")
@@ -48,7 +49,15 @@ func (ps *privilegeService) AssignRole(assignerID, userID, role, resourceID stri
 		return err
 	}
 
-	_, err := ps.GetRole(assignerID, assignerID, resourceID)
+	exists, err := ps.DB.CheckIfResourceExists(resourceID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		ps.DB.AssignRole(assignerID, SuperRole, resourceID)
+	}
+
+	_, err = ps.GetRole(assignerID, assignerID, resourceID)
 	if err != nil {
 		return err
 	}
