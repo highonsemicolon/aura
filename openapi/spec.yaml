@@ -1,0 +1,172 @@
+openapi: 3.1.0
+info:
+  title: Authorization Service API
+  description: A high-performance authorization service based on ReBAC (Zanzibar-like model).
+  version: 1.0.0
+servers:
+  - url: https://authz.example.com/api/v1
+    description: Production server
+paths:
+  /permissions/check:
+    post:
+      summary: Check if a user has permission for an object
+      operationId: checkPermission
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckPermissionRequest"
+      responses:
+        "200":
+          description: Permission check result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckPermissionResponse"
+  
+  /relationships/expand:
+    get:
+      summary: Expand all relationships for a given object
+      operationId: expandRelationships
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: object
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of relationships
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpandRelationshipsResponse"
+
+  /resources/lookup:
+    get:
+      summary: Find all resources accessible by a user
+      operationId: lookupResources
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: permission
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of accessible resources
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LookupResourcesResponse"
+
+  /relationships:
+    post:
+      summary: Create a new relationship tuple
+      operationId: createRelationship
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RelationshipRequest"
+      responses:
+        "201":
+          description: Relationship created successfully
+        "400":
+          description: Invalid input data
+    delete:
+      summary: Delete an existing relationship tuple
+      operationId: deleteRelationship
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RelationshipRequest"
+      responses:
+        "200":
+          description: Relationship deleted successfully
+        "400":
+          description: Invalid input data
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    CheckPermissionRequest:
+      type: object
+      properties:
+        subject:
+          type: string
+          example: "user:alice"
+        object:
+          type: string
+          example: "doc:123"
+        permission:
+          type: string
+          example: "read"
+      required: [subject, object, permission]
+    CheckPermissionResponse:
+      type: object
+      properties:
+        allowed:
+          type: boolean
+          example: true
+    ExpandRelationshipsResponse:
+      type: object
+      properties:
+        object:
+          type: string
+          example: "doc:123"
+        relationships:
+          type: array
+          items:
+            type: object
+            properties:
+              relation:
+                type: string
+                example: "viewer"
+              subject:
+                type: string
+                example: "group:team1"
+    LookupResourcesResponse:
+      type: object
+      properties:
+        resources:
+          type: array
+          items:
+            type: string
+          example: ["doc:123", "doc:456"]
+    RelationshipRequest:
+      type: object
+      properties:
+        subject:
+          type: string
+          example: "user:bob"
+        relation:
+          type: string
+          example: "member"
+        object:
+          type: string
+          example: "group:team1"
+      required: [subject, relation, object]
