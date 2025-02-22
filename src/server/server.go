@@ -34,11 +34,13 @@ func (s *Server) ListenAndServe() {
 	}()
 }
 
-func (s *Server) HandleShutdown() {
-
+func (s *Server) WaitForShutdown() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	<-quit
+}
+
+func (s *Server) Shutdown() {
 
 	log.Println("shutting down server...")
 
