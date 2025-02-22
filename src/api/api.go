@@ -2,8 +2,6 @@ package api
 
 import (
 	"context"
-
-	"github.com/gin-gonic/gin"
 )
 
 type API struct{}
@@ -26,19 +24,4 @@ func (a *API) DeleteRelationship(ctx context.Context, x DeleteRelationshipReques
 
 func (a *API) ExpandRelationships(ctx context.Context, x ExpandRelationshipsRequestObject) (ExpandRelationshipsResponseObject, error) {
 	return ExpandRelationships200JSONResponse{}, nil
-}
-
-func NewApp() *gin.Engine {
-	api := &API{}
-	r := gin.Default()
-
-	server := NewStrictHandler(api, nil)
-
-	v1 := r.Group("/api/v1")
-	{
-		RegisterHandlers(v1, server)
-	}
-
-	return r
-
 }
