@@ -23,8 +23,11 @@ func NewServer(addr string) *Server {
 		httpServer: &http.Server{
 			Addr:              addr,
 			Handler:           router,
-			ReadHeaderTimeout: 5 * time.Second,
+			ReadTimeout:       5 * time.Second,
+			ReadHeaderTimeout: 2 * time.Second,
 			WriteTimeout:      10 * time.Second,
+			IdleTimeout:       15 * time.Second,
+			MaxHeaderBytes:    1 << 20,
 		},
 	}
 }
