@@ -1,6 +1,13 @@
 tidy:
 	go mod tidy
 
+fmt:
+	@echo "Formatting Go code..."
+	go fmt ./...
+lint:
+	@echo "Running linter..."
+	golangci-lint run --allow-parallel-runners --no-config 
+
 codegen:
 	oapi-codegen \
 	-generate types,gin,strict-server,spec \
