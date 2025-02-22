@@ -29,7 +29,7 @@ func processFile(path string) error {
 	})
 
 	if string(content) != updatedContent {
-		return os.WriteFile(path, []byte(updatedContent), 0644)
+		return os.WriteFile(path, []byte(updatedContent), 0600)
 	}
 	return nil
 }
