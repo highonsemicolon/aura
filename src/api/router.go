@@ -2,7 +2,7 @@ package api
 
 import "github.com/gin-gonic/gin"
 
-func NewApp() *gin.Engine {
+func NewRouter() *gin.Engine {
 	api := &API{}
 	router := gin.Default()
 

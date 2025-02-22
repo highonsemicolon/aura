@@ -17,12 +17,12 @@ type Server struct {
 }
 
 func NewServer(addr string) *Server {
-	r := api.NewApp()
+	router := api.NewRouter()
 
 	return &Server{
 		httpServer: &http.Server{
 			Addr:              addr,
-			Handler:           r,
+			Handler:           router,
 			ReadHeaderTimeout: 5 * time.Second,
 			WriteTimeout:      10 * time.Second,
 		},
