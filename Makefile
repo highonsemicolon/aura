@@ -24,11 +24,11 @@ static-fix:
 	go run openapi/fix_errors.go ./src/api
 
 run:
-	go run ./src/main.go
+	go run ./src
 
 run-hot:
 	air \
-	--build.cmd="go build -o ./tmp/main ./src/main.go" \
+	--build.cmd="go build -o ./tmp/main ./src" \
 	--build.bin="./tmp/main"
 
 build:
