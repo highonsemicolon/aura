@@ -4,15 +4,14 @@ import "github.com/gin-gonic/gin"
 
 func NewApp() *gin.Engine {
 	api := &API{}
-	r := gin.Default()
+	router := gin.Default()
 
 	server := NewStrictHandler(api, nil)
 
-	v1 := r.Group("/api/v1")
+	v1 := router.Group("/api/v1")
 	{
 		RegisterHandlers(v1, server)
 	}
 
-	return r
-
+	return router
 }

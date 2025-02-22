@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"os"
@@ -20,8 +21,10 @@ func NewServer(addr string) *Server {
 
 	return &Server{
 		httpServer: &http.Server{
-			Addr:    addr,
-			Handler: r,
+			Addr:              addr,
+			Handler:           r,
+			ReadHeaderTimeout: 5 * time.Second,
+			WriteTimeout:      10 * time.Second,
 		},
 	}
 }
@@ -30,7 +33,7 @@ func (s *Server) StartAndWait() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	go func() {
-		if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := s.httpServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("listen: %s\n", err)
 		}
 	}()

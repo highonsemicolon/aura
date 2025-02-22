@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -40,7 +41,7 @@ func processDirectory(dir string) error {
 			return err
 		}
 		if !info.IsDir() && strings.HasSuffix(path, ".go") {
-			println("Processing", path)
+			log.Println("Processing", path)
 			return processFile(path)
 		}
 		return nil
