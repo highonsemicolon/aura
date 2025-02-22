@@ -26,17 +26,15 @@ func NewServer(addr string) *Server {
 	}
 }
 
-func (s *Server) ListenAndServe() {
+func (s *Server) StartAndWait() {
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
 	go func() {
 		if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("listen: %s\n", err)
 		}
 	}()
-}
 
-func (s *Server) WaitForShutdown() {
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt)
 	<-quit
 }
 
