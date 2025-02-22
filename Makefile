@@ -13,3 +13,6 @@ static-fix:
 
 run:
 	go run ./src/main.go
+
+run-hot:
+	air --build.cmd="go run ./src/main.go"
