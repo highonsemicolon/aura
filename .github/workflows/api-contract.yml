@@ -1,0 +1,23 @@
+name: API Contract Test
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: make tidy
+
+      - name: Install dredd
+        run: npm install -g dredd
+
+      - name: Start API server
+        run: make run &
+
+      - name: Run API contract tests
+        run: dredd openapi/spec.yaml http://localhost:8080
