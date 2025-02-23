@@ -8,6 +8,7 @@ require (
 	github.com/getkin/kin-openapi v0.129.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/oapi-codegen/runtime v1.1.1
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 require filippo.io/edwards25519 v1.1.0 // indirect
