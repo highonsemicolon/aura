@@ -54,7 +54,6 @@ func (s *Server) Shutdown() {
 
 	if err := s.httpServer.Shutdown(ctx); err != nil {
 		log.Fatal("server forced to shutdown:", err)
-		os.Exit(1)
 	}
 
 	log.Println("server exited gracefully")
