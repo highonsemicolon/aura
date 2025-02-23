@@ -1,11 +1,14 @@
 package main
 
 import (
+	"github.com/highonsemicolon/aura/config"
 	"github.com/highonsemicolon/aura/src/server"
 )
 
 func main() {
-	srv := server.NewServer(":8080")
+	config := config.GetConfig()
+
+	srv := server.NewServer(config.Address)
 	defer srv.Shutdown()
 
 	srv.StartAndWait()

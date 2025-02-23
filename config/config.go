@@ -8,8 +8,9 @@ import (
 )
 
 type Config struct {
-	MySQL MySQL `yaml:"mysql" mapstructure:"mysql"`
-	Tables map[string]string `yaml:"tables" mapstructure:"tables"`
+	Address string            `yaml:"address" mapstructure:"address"`
+	MySQL   MySQL             `yaml:"mysql" mapstructure:"mysql"`
+	Tables  map[string]string `yaml:"tables" mapstructure:"tables"`
 }
 
 type MySQL struct {
