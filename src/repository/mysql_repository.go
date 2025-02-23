@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"fmt"
+	"reflect"
 )
 
 type MySQLRepository[T any] struct {
@@ -11,6 +12,11 @@ type MySQLRepository[T any] struct {
 }
 
 func NewMySQLRepository[T any](db *sql.DB, tableName string) *MySQLRepository[T] {
+	if !isValidTableName(tableName) {
+		var t T
+		tType := reflect.TypeOf(t)
+		panic(fmt.Sprintf("invalid table name: `%s`, for type: `%s`", tableName, tType))
+	}
 	return &MySQLRepository[T]{db: db, tableName: tableName}
 }
 
