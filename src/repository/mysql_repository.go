@@ -27,7 +27,6 @@ func (r *MySQLRepository[T]) GetByID(id string) (*T, error) {
 	return &entity, nil
 }
 
-
 func (r *MySQLRepository[T]) GetAll() ([]T, error) {
 	query := fmt.Sprintf("SELECT * FROM %v", r.tableName)
 	rows, err := r.db.Query(query)
