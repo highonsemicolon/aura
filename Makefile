@@ -29,7 +29,8 @@ run:
 run-hot:
 	air \
 	--build.cmd="go build -o ./tmp/main ./src" \
-	--build.bin="./tmp/main"
+	--build.bin="./tmp/main" \
+	--build.pre_cmd="make tidy"
 
 build:
 	@if [ ! -f src/main.go ]; then echo "Error: src/main.go not found!"; exit 1; fi
