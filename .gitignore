@@ -2,4 +2,4 @@
 ssl
 *.pem
 tmp*
-config*
+config.yaml
