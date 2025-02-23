@@ -1,4 +1,5 @@
 .vscode
+ssl
 *.pem
 tmp*
 config*
