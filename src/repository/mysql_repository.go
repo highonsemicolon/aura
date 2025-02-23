@@ -12,7 +12,7 @@ type MySQLRepository[T any] struct {
 }
 
 func NewMySQLRepository[T any](db *sql.DB, tableName string) *MySQLRepository[T] {
-	if !isValidTableName(tableName) {
+	if !isValidRepositoryName(tableName) {
 		tType := reflect.TypeOf((*T)(nil)).Elem()
 		panic(fmt.Sprintf("invalid table name: `%s`, for type: `%s`", tableName, tType))
 	}
