@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"sync"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -14,11 +15,11 @@ type Config struct {
 }
 
 type MySQL struct {
-	DSN             string `yaml:"dsn" mapstructure:"dsn"`
-	CAPath          string `yaml:"ca-path" mapstructure:"ca-path"`
-	MaxOpenConns    int    `yaml:"max-open-conns" mapstructure:"max-open-conns"`
-	MaxIdleConns    int    `yaml:"max-idle-conns" mapstructure:"max-idle-conns"`
-	ConnMaxLifetime string    `yaml:"conn-max-lifetime" mapstructure:"conn-max-lifetime"`
+	DSN             string        `yaml:"dsn" mapstructure:"dsn"`
+	CAPath          string        `yaml:"ca-path" mapstructure:"ca-path"`
+	MaxOpenConns    int           `yaml:"max-open-conns" mapstructure:"max-open-conns"`
+	MaxIdleConns    int           `yaml:"max-idle-conns" mapstructure:"max-idle-conns"`
+	ConnMaxLifetime time.Duration `yaml:"conn-max-lifetime" mapstructure:"conn-max-lifetime"`
 }
 
 var (
