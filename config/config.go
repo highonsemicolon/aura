@@ -5,21 +5,22 @@ import (
 	"sync"
 	"time"
 
-	"github.com/spf13/viper"
+	"github.com/joho/godotenv"
+	"github.com/kelseyhightower/envconfig"
 )
 
 type Config struct {
-	Address string            `yaml:"address" mapstructure:"address"`
-	MySQL   MySQL             `yaml:"mysql" mapstructure:"mysql"`
-	Tables  map[string]string `yaml:"tables" mapstructure:"tables"`
+	Address string `envconfig:"ADDRESS"`
+	MySQL   MySQL
+	Tables  map[string]string `envconfig:"TABLES"`
 }
 
 type MySQL struct {
-	DSN             string        `yaml:"dsn" mapstructure:"dsn"`
-	CAPath          string        `yaml:"ca-path" mapstructure:"ca-path"`
-	MaxOpenConns    int           `yaml:"max-open-conns" mapstructure:"max-open-conns"`
-	MaxIdleConns    int           `yaml:"max-idle-conns" mapstructure:"max-idle-conns"`
-	ConnMaxLifetime time.Duration `yaml:"conn-max-lifetime" mapstructure:"conn-max-lifetime"`
+	DSN             string        `envconfig:"MYSQL_DSN"`
+	CAPath          string        `envconfig:"MYSQL_CA_PATH"`
+	MaxOpenConns    int           `envconfig:"MYSQL_MAX_OPEN_CONNS"`
+	MaxIdleConns    int           `envconfig:"MYSQL_MAX_IDLE_CONNS"`
+	ConnMaxLifetime time.Duration `envconfig:"MYSQL_CONN_MAX_LIFETIME"`
 }
 
 var (
@@ -28,19 +29,14 @@ var (
 )
 
 func loadConfig() {
-
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(".")
-	viper.AutomaticEnv()
-
-	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("failed to read config file: %v", err)
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, using system environment variables.")
 	}
 
 	var config Config
-	if err := viper.Unmarshal(&config); err != nil {
-		log.Fatalf("failed to unmarshal config file: %v", err)
+	err := envconfig.Process("", &config)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	instance = &config
