@@ -1,0 +1,9 @@
+mysql:
+  dsn: "root:password@tcp(localhost:3306)/auradb?tls=custom"
+  ca-path: "./ssl/ca.pem"
+  conn-max-lifetime: 2s
+
+tables:
+  relationships: relationships
+
+# address: "localhost:8080"
