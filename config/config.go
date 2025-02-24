@@ -14,8 +14,11 @@ type Config struct {
 }
 
 type MySQL struct {
-	DSN    string `yaml:"dsn" mapstructure:"dsn"`
-	CAPath string `yaml:"ca-path" mapstructure:"ca-path"`
+	DSN             string `yaml:"dsn" mapstructure:"dsn"`
+	CAPath          string `yaml:"ca-path" mapstructure:"ca-path"`
+	MaxOpenConns    int    `yaml:"max-open-conns" mapstructure:"max-open-conns"`
+	MaxIdleConns    int    `yaml:"max-idle-conns" mapstructure:"max-idle-conns"`
+	ConnMaxLifetime string    `yaml:"conn-max-lifetime" mapstructure:"conn-max-lifetime"`
 }
 
 var (

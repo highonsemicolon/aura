@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/highonsemicolon/aura/config"
@@ -24,6 +25,15 @@ func InitDB(config config.MySQL) *sql.DB {
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
+
+	db.SetMaxOpenConns(config.MaxOpenConns)
+	db.SetMaxIdleConns(config.MaxIdleConns)
+
+	duration, err := time.ParseDuration(config.ConnMaxLifetime)
+	if err != nil {
+		log.Fatal("Invalid ConnMaxLifetime:", err)
+	}
+	db.SetConnMaxLifetime(duration)
 
 	if err := db.Ping(); err != nil {
 		log.Fatal("Database is unreachable:", err)
