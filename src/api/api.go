@@ -13,22 +13,22 @@ func (a *API) CreateObject(ctx context.Context, request CreateObjectRequestObjec
 	return CreateObject201Response{}, nil
 }
 
-func (a *API) LookupResources(ctx context.Context, x LookupResourcesRequestObject) (LookupResourcesResponseObject, error) {
+func (a *API) LookupResources(ctx context.Context, request LookupResourcesRequestObject) (LookupResourcesResponseObject, error) {
 	return LookupResources200JSONResponse{}, nil
 }
 
-func (a *API) CreateRelationship(ctx context.Context, x CreateRelationshipRequestObject) (CreateRelationshipResponseObject, error) {
+func (a *API) CreateRelationship(ctx context.Context, request CreateRelationshipRequestObject) (CreateRelationshipResponseObject, error) {
 	return CreateRelationship201Response{}, nil
 }
 
-func (a *API) CheckPermission(ctx context.Context, x CheckPermissionRequestObject) (CheckPermissionResponseObject, error) {
+func (a *API) CheckPermission(ctx context.Context, request CheckPermissionRequestObject) (CheckPermissionResponseObject, error) {
 	return CheckPermission200JSONResponse{}, nil
 }
 
-func (a *API) DeleteRelationship(ctx context.Context, x DeleteRelationshipRequestObject) (DeleteRelationshipResponseObject, error) {
+func (a *API) DeleteRelationship(ctx context.Context, request DeleteRelationshipRequestObject) (DeleteRelationshipResponseObject, error) {
 	return DeleteRelationship200Response{}, nil
 }
 
-func (a *API) ExpandRelationships(ctx context.Context, x ExpandRelationshipsRequestObject) (ExpandRelationshipsResponseObject, error) {
+func (a *API) ExpandRelationships(ctx context.Context, request ExpandRelationshipsRequestObject) (ExpandRelationshipsResponseObject, error) {
 	return ExpandRelationships200JSONResponse{}, nil
 }
