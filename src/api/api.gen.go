@@ -51,11 +51,22 @@ type LookupResourcesResponse struct {
 	Resources *[]string `json:"resources,omitempty"`
 }
 
+// ObjectRequest defines model for ObjectRequest.
+type ObjectRequest struct {
+	Object string `json:"object"`
+}
+
 // RelationshipRequest defines model for RelationshipRequest.
 type RelationshipRequest struct {
 	Object   string `json:"object"`
 	Relation string `json:"relation"`
 	Subject  string `json:"subject"`
+}
+
+// CreateObjectParams defines parameters for CreateObject.
+type CreateObjectParams struct {
+	// XUserId User ID of the object creator
+	XUserId string `json:"X-User-Id"`
 }
 
 // ExpandRelationshipsParams defines parameters for ExpandRelationships.
@@ -69,6 +80,9 @@ type LookupResourcesParams struct {
 	Permission string `form:"permission" json:"permission"`
 }
 
+// CreateObjectJSONRequestBody defines body for CreateObject for application/json ContentType.
+type CreateObjectJSONRequestBody = ObjectRequest
+
 // CheckPermissionJSONRequestBody defines body for CheckPermission for application/json ContentType.
 type CheckPermissionJSONRequestBody = CheckPermissionRequest
 
@@ -77,6 +91,12 @@ type CreateRelationshipJSONRequestBody = RelationshipRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Delete an existing object
+	// (DELETE /objects)
+	DeleteObject(c *gin.Context)
+	// Create a new object
+	// (POST /objects)
+	CreateObject(c *gin.Context, params CreateObjectParams)
 	// Check if a user has permission for an object
 	// (POST /permissions/check)
 	CheckPermission(c *gin.Context)
@@ -102,6 +122,65 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(c *gin.Context)
+
+// DeleteObject operation middleware
+func (siw *ServerInterfaceWrapper) DeleteObject(c *gin.Context) {
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.DeleteObject(c)
+}
+
+// CreateObject operation middleware
+func (siw *ServerInterfaceWrapper) CreateObject(c *gin.Context) {
+
+	var err error
+
+	c.Set(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreateObjectParams
+
+	headers := c.Request.Header
+
+	// ------------- Required header parameter "X-User-Id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-User-Id")]; found {
+		var XUserId string
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandler(c, fmt.Errorf("expected one value for X-User-Id, got %d", n), http.StatusBadRequest)
+			return
+		}
+
+		err = runtime.BindStyledParameterWithLocation("simple", false, "X-User-Id", runtime.ParamLocationHeader, valueList[0], &XUserId)
+		if err != nil {
+			siw.ErrorHandler(c, fmt.Errorf("invalid format for parameter X-User-Id: %w", err), http.StatusBadRequest)
+			return
+		}
+
+		params.XUserId = XUserId
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("header parameter X-User-Id is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.CreateObject(c, params)
+}
 
 // CheckPermission operation middleware
 func (siw *ServerInterfaceWrapper) CheckPermission(c *gin.Context) {
@@ -260,11 +339,61 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 		ErrorHandler:       errorHandler,
 	}
 
+	router.DELETE(options.BaseURL+"/objects", wrapper.DeleteObject)
+	router.POST(options.BaseURL+"/objects", wrapper.CreateObject)
 	router.POST(options.BaseURL+"/permissions/check", wrapper.CheckPermission)
 	router.DELETE(options.BaseURL+"/relationships", wrapper.DeleteRelationship)
 	router.POST(options.BaseURL+"/relationships", wrapper.CreateRelationship)
 	router.GET(options.BaseURL+"/relationships/expand", wrapper.ExpandRelationships)
 	router.GET(options.BaseURL+"/resources/lookup", wrapper.LookupResources)
+}
+
+type DeleteObjectRequestObject struct {
+}
+
+type DeleteObjectResponseObject interface {
+	VisitDeleteObjectResponse(w http.ResponseWriter) error
+}
+
+type DeleteObject200Response struct {
+}
+
+func (response DeleteObject200Response) VisitDeleteObjectResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
+type DeleteObject400Response struct {
+}
+
+func (response DeleteObject400Response) VisitDeleteObjectResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type CreateObjectRequestObject struct {
+	Params CreateObjectParams
+	Body   *CreateObjectJSONRequestBody
+}
+
+type CreateObjectResponseObject interface {
+	VisitCreateObjectResponse(w http.ResponseWriter) error
+}
+
+type CreateObject201Response struct {
+}
+
+func (response CreateObject201Response) VisitCreateObjectResponse(w http.ResponseWriter) error {
+	w.WriteHeader(201)
+	return nil
+}
+
+type CreateObject400Response struct {
+}
+
+func (response CreateObject400Response) VisitCreateObjectResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
 }
 
 type CheckPermissionRequestObject struct {
@@ -367,6 +496,12 @@ func (response LookupResources200JSONResponse) VisitLookupResourcesResponse(w ht
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// Delete an existing object
+	// (DELETE /objects)
+	DeleteObject(ctx context.Context, request DeleteObjectRequestObject) (DeleteObjectResponseObject, error)
+	// Create a new object
+	// (POST /objects)
+	CreateObject(ctx context.Context, request CreateObjectRequestObject) (CreateObjectResponseObject, error)
 	// Check if a user has permission for an object
 	// (POST /permissions/check)
 	CheckPermission(ctx context.Context, request CheckPermissionRequestObject) (CheckPermissionResponseObject, error)
@@ -394,6 +529,66 @@ func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareF
 type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
+}
+
+// DeleteObject operation middleware
+func (sh *strictHandler) DeleteObject(ctx *gin.Context) {
+	var request DeleteObjectRequestObject
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteObject(ctx, request.(DeleteObjectRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteObject")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(DeleteObjectResponseObject); ok {
+		if err := validResponse.VisitDeleteObjectResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateObject operation middleware
+func (sh *strictHandler) CreateObject(ctx *gin.Context, params CreateObjectParams) {
+	var request CreateObjectRequestObject
+
+	request.Params = params
+
+	var body CreateObjectJSONRequestBody
+	if err := ctx.ShouldBind(&body); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		ctx.Error(err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateObject(ctx, request.(CreateObjectRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateObject")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(CreateObjectResponseObject); ok {
+		if err := validResponse.VisitCreateObjectResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
 }
 
 // CheckPermission operation middleware
@@ -544,22 +739,24 @@ func (sh *strictHandler) LookupResources(ctx *gin.Context, params LookupResource
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/8RW32/bNhD+VwhuDxugRk7bDYXenHYFMvShSAcMWOCHE3W22FAkcySduIX/94GUbEuW",
-	"nMbAur5JFO/X9919uq9cmMYajdo7XnzlTtTYQHp8W6O4+4jUSOek0Td4H9D5+MWSsUheYrpnys8o0jk+",
-	"QmMV8oJXRhSXL1/xjPuNjQfOk9Qrvs243XscmhBCNXXfhQn/wSEVoKTAsck244T3QRJWvLjd22e7RAcp",
-	"LPbm3ddtNi7cWaMdjisHpcxDjNJLzVPAvc/SGIWgU06jMH88WtDVDSrw0mhXS+tOhzoTZOp7jVbSY+PG",
-	"bnf3ho7XEh+Qnk3GikywhUdoLifZGFXeHQARbKZvfDDmLtgbdCaQwCdwod2VQUq3PWzi0+vffo9M70EY",
-	"1fXtjPo8nTUKT6KTnWCgwaY8g4E0DqUpzxiGfdz9XIxHIYZDEUj6zaeoC22RVwiENA++jm9lentvqAHP",
-	"C/7n33/xrFWRNADp6yGt2nvLt9Gx1EsT7St0gqRtIeBzVstV/cIiLaNHLZBB8LUh+SVlyxzSWgpkJTis",
-	"mNHsBq/mb9kv/4D+IkugF0reIWtMherXixhX+oTQfODlU+dl/vGaZ3yN1MoRv7yYXcwiysaiBit5wV+l",
-	"o4xb8HUqPz+oh8tFlIrUB6bth9gNKcZ1xYtjJeEtGej8lak28bow2qNOlmCtkiLZ5p9d2xCtGsennwmX",
-	"vOA/5Qe5zjutzk8I9XZIfhSmdNCOUqrl5Wz2/bLoRjalMWT5cIslABmhC2rYcLy4Hbba7WK7iO3fNECb",
-	"HbZMLhmw2P6sBscO1LClIQaa9Vo5H4lihQo9jml7l877E8+ngRuW1Tdgre+KuSAEOrcMSm1iZ72esrzW",
-	"a1CyYlLb4FkFHs7Dok041ouP0nmpV6xfLPMh6kT8+U63KSFM1Pvfd+qUiD6rTS+/gbZIFfxPaLdwMWAa",
-	"HyZxHjVbjulfH1NZ4QQBE6tAkhyCBj2SSynJmPt9QNrwjGtoekp9DGDW4+P4h7D4jhrw1EozoQMfpPPM",
-	"LNlwMM/ioo3IQKmhl3b+2Uqu8VgEuoUhV2nHOMnJ0QryPD6iEp3FRjbtxx7/M348t6dWsid4hTSMslTI",
-	"DnvaWfS+l3tyO/u+03LTiX+bRNwNduQME3qHa1TGNqg9a2/xjAdS3UZS5LkyAlRtnC/ezN7McrAyX1/y",
-	"7WL7bwAAAP//Ly27MyENAAA=",
+	"H4sIAAAAAAAC/8RXX2/bNhD/KgS3hw1QIrvthkJvTrICHgqkSDdsWOCHk3S22FAkQ1JO3ELffSCpWFIk",
+	"u9GQLG+2dP9/d787faOZLJUUKKyhyTdqsgJL8D/PC8xuPqEumTFMiiu8rdBY90ZpqVBbhl5Opl8w88/x",
+	"HkrFkSY0l1kyf/OWRtTulHtgrGZiQ+uIqr3FvopGyMfkTTVivzKoE+Asw6FKHVGNtxXTmNPkeq8fPQTa",
+	"C2G1V2/e1tEwcaOkMDjMHDiXd85LJzSrK9zbTKXkCMLHNHDz270CkV8hB8ukMAVT5rCriUXWXatOi1ks",
+	"zdDsg1zf8JbhHeong7HRslKJRSjno2gMMm8egNawG5f4KOVNpa7QyEpneKQu+kGkF9J1pzbu17tffnVI",
+	"74swyOv7EV36X88zBI86tNEda8Vud0zyfRST6ADuJZbpBNz9EKYynTCCe7/R4aydO8wqzezus2OjkOQZ",
+	"gka9qGzh/qX+3wepS7A0ob//9QeNAnf5sfNv27AKaxWtnWEm1tLp52gyzVQoAV2Qgm2KE4V67SyKDAlU",
+	"tpCaffXREoN6yzIkKRjMiRTkCs8W5+Snf0B8ZSnoE85ukJQyR/7zqfPLrK/Qomflc2Nl8WlJI7pFHUiQ",
+	"zk9npzNXZalQgGI0oW/9o4gqsIVPPw7VMSF4jtbPgusCb3uZ04Re+OeXba3D0HidN7PZMO8gSoK9nJgq",
+	"y9CYdcX5zoXzbkxnKbbAWU6YUJUlOVjoIUaT6z5W16t65fqnLEHv9kESEATvmbFMbMiely1sjOuXyybX",
+	"lVsXMrR8P9VzjdBJVYGGEi1q4/33I/7ToCbLCyLXxBbYeCOZsyBdkzAnVCDkvmUE+Bb6+8SpnSxz2m3l",
+	"QO5hR47wiMtUhyk9k/nOSWRSWBQ+A1CKs8znEH8xYfZaUz9qXNOE/hC3+zhulnHc5566P14upnqA9vwg",
+	"2j7x/wvtgBMBIvDuGM51RON2K5s4cyvYM904/P0NTV+m7AcOoCfVf/ZyUTSr0IfRR6uVIr6ARKOpuJ0I",
+	"mddkawLEETwpwJAWGrKW2g1vh6zjwbFxnKC6O+1JNNVVeHWy6iZLbOU2YdvQvWPuu/Q1KMTzt/DY/fBf",
+	"+aMHw+uxyCQABu0Zo7+6XYwbHEFm5Cgf7he/MW4r1Lt2Ych27U7aFi/EGsc+LkaY4yMz1i3I/ihPAil4",
+	"JMB530pgDLJhW3xMG83pHnN/7R/E5NHHwNPwcNw1CY1o3I56vGVeH9tDH0dHcAU/pSzlSNovpknwfmB7",
+	"cBv9rtF016yLEIS7l8ePsQvcIpeqRGFJkKIRrTRvrvQkjrnMgBfS2OT97P0sBsXi7ZzWq/rfAAAA//9Y",
+	"rKb6qxAAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

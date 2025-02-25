@@ -76,6 +76,8 @@ paths:
     post:
       summary: Create a new relationship tuple
       operationId: createRelationship
+      tags:
+        - Relationships
       security:
         - BearerAuth: []
       requestBody:
@@ -92,6 +94,8 @@ paths:
     delete:
       summary: Delete an existing relationship tuple
       operationId: deleteRelationship
+      tags:
+        - Relationships
       security:
         - BearerAuth: []
       responses:
@@ -99,6 +103,46 @@ paths:
           description: Relationship deleted successfully
         "400":
           description: Invalid input data
+
+  /objects:
+    post:
+      summary: Create a new object
+      operationId: createObject
+      tags:
+        - Objects
+      security:
+        - BearerAuth: []
+      parameters:
+      - in: header
+        name: X-User-Id
+        schema:
+          type: string
+        required: true
+        description: User ID of the object creator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ObjectRequest"
+      responses:
+        "201":
+          description: Object created successfully
+        "400":
+          description: Invalid input data
+    delete:
+      summary: Delete an existing object
+      operationId: deleteObject
+      tags:
+        - Objects
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Object deleted successfully
+        "400":
+          description: Invalid input data
+
 
 components:
   securitySchemes:
@@ -164,3 +208,11 @@ components:
           type: string
           example: "group:team1"
       required: [subject, relation, object]
+    ObjectRequest:
+      type: object
+      properties:
+        object:
+          type: string
+          example: "doc:123"
+        
+      required: [object]

@@ -6,6 +6,13 @@ import (
 
 type API struct{}
 
+func (a *API) DeleteObject(ctx context.Context, request DeleteObjectRequestObject) (DeleteObjectResponseObject, error) {
+	return DeleteObject200Response{}, nil
+}
+func (a *API) CreateObject(ctx context.Context, request CreateObjectRequestObject) (CreateObjectResponseObject, error) {
+	return CreateObject201Response{}, nil
+}
+
 func (a *API) LookupResources(ctx context.Context, x LookupResourcesRequestObject) (LookupResourcesResponseObject, error) {
 	return LookupResources200JSONResponse{}, nil
 }
