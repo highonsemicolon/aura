@@ -6,7 +6,7 @@ import (
 )
 
 type MySQLRepository[T any] struct {
-	db Database
+	db        Database
 	tableName string
 }
 

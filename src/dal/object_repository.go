@@ -8,6 +8,6 @@ type ObjectRepository struct {
 	*MySQLRepository[models.Object]
 }
 
-func NewObjectRepository(dal *MySQLDAL, tableName string) *ObjectRepository {
+func NewObjectRepository(dal Database, tableName string) *ObjectRepository {
 	return &ObjectRepository{NewMySQLRepository[models.Object](dal, tableName)}
 }

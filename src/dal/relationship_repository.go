@@ -8,6 +8,6 @@ type RelationshipRepository struct {
 	*MySQLRepository[models.Relationship]
 }
 
-func NewRelationshipRepository(dal *MySQLDAL, tableName string) *RelationshipRepository {
+func NewRelationshipRepository(dal Database, tableName string) *RelationshipRepository {
 	return &RelationshipRepository{NewMySQLRepository[models.Relationship](dal, tableName)}
 }

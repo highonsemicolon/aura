@@ -2,19 +2,15 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/highonsemicolon/aura/config"
-	"github.com/highonsemicolon/aura/src/dal"
 	"github.com/highonsemicolon/aura/src/service"
 )
 
-func NewRouter() *gin.Engine {
-	config := config.GetConfig()
-	db := dal.NewMySQLDAL(config.MySQL)
-	objectRepo := dal.NewObjectRepository(db, config.Tables["objects"])
+func NewAPI(services *service.ServiceContainer) *API {
+	return &API{svc: services}
+}
 
-	api := &API{
-		object: service.NewObjectService(objectRepo),
-	}
+func (api *API) NewRouter() *gin.Engine {
+
 	router := gin.Default()
 	router.GET("/healthz", func(c *gin.Context) { c.JSON(200, gin.H{"status": "ok"}) })
 

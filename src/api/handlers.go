@@ -7,14 +7,14 @@ import (
 )
 
 type API struct {
-	object service.ObjectService
+	svc *service.ServiceContainer
 }
 
 func (a *API) DeleteObject(ctx context.Context, request DeleteObjectRequestObject) (DeleteObjectResponseObject, error) {
 	return DeleteObject200Response{}, nil
 }
 func (a *API) CreateObject(ctx context.Context, request CreateObjectRequestObject) (CreateObjectResponseObject, error) {
-	err := a.object.Create(ctx, request.Params.XUserId, request.Body.Object)
+	err := a.svc.ObjectService.Create(ctx, request.Params.XUserId, request.Body.Object)
 	if err != nil {
 		return nil, err
 	}
