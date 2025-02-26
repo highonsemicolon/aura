@@ -1,6 +1,6 @@
 package dal
 
-type Repository[T any] interface {
+type DAL[T any] interface {
 	GetByID(id string) (*T, error)
 	GetAll() ([]T, error)
 	Create(entity *T) error

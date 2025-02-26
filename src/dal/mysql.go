@@ -10,7 +10,11 @@ import (
 	"github.com/highonsemicolon/aura/src/utils"
 )
 
-func InitDB(config config.MySQL) *sql.DB {
+type MySQLDAL struct {
+	db *sql.DB
+}
+
+func NewMySQLDAL(config config.MySQL) *MySQLDAL {
 	if config.CAPath != "" {
 		tlsConfig, err := utils.InitTLS(config.CAPath)
 		if err != nil {
@@ -33,7 +37,11 @@ func InitDB(config config.MySQL) *sql.DB {
 		log.Fatal("Database is unreachable:", err)
 	}
 
-	return db
+	return &MySQLDAL{db: db}
+}
+
+func (dal *MySQLDAL) Close() error {
+	return dal.db.Close()
 }
 
 func (r *MySQLRepository[T]) withTransaction(fn func(tx *sql.Tx) error) error {

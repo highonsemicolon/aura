@@ -1,22 +1,21 @@
 package dal
 
 import (
-	"database/sql"
 	"fmt"
 	"reflect"
 )
 
 type MySQLRepository[T any] struct {
-	db        *sql.DB
+	*MySQLDAL
 	tableName string
 }
 
-func NewMySQLRepository[T any](db *sql.DB, tableName string) *MySQLRepository[T] {
+func NewMySQLRepository[T any](db *MySQLDAL, tableName string) *MySQLRepository[T] {
 	if !isValidRepositoryName(tableName) {
 		tType := reflect.TypeOf((*T)(nil)).Elem()
 		panic(fmt.Sprintf("invalid table name: `%s`, for type: `%s`", tableName, tType))
 	}
-	return &MySQLRepository[T]{db: db, tableName: tableName}
+	return &MySQLRepository[T]{MySQLDAL: db, tableName: tableName}
 }
 
 func (r *MySQLRepository[T]) GetByID(id string) (*T, error) {
