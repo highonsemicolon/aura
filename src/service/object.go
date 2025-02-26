@@ -7,18 +7,18 @@ import (
 	"github.com/highonsemicolon/aura/src/models"
 )
 
-type ObjectServiceInterface interface {
+type ObjectService interface {
 	Create(ctx context.Context, user, object string) error
 }
 
-type ObjectService struct {
+type objectService struct {
 	dal dal.DAL[models.Object]
 }
 
-func NewObjectService(dal dal.DAL[models.Object]) *ObjectService {
-	return &ObjectService{dal: dal}
+func NewObjectService(dal dal.DAL[models.Object]) *objectService {
+	return &objectService{dal: dal}
 }
 
-func (o *ObjectService) Create(ctx context.Context, user, object string) error {
+func (o *objectService) Create(ctx context.Context, user, object string) error {
 	return o.dal.Create(&models.Object{ID: 123456543, ObjectID: object})
 }

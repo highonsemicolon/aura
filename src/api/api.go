@@ -7,7 +7,7 @@ import (
 )
 
 type API struct {
-	object service.ObjectServiceInterface
+	object service.ObjectService
 }
 
 func (a *API) DeleteObject(ctx context.Context, request DeleteObjectRequestObject) (DeleteObjectResponseObject, error) {
