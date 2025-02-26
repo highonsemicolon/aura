@@ -1,4 +1,4 @@
-package repository
+package dal
 
 type Repository[T any] interface {
 	GetByID(id string) (*T, error)
