@@ -6,16 +6,16 @@ import (
 )
 
 type MySQLRepository[T any] struct {
-	*MySQLDAL
+	db Database
 	tableName string
 }
 
-func NewMySQLRepository[T any](db *MySQLDAL, tableName string) *MySQLRepository[T] {
+func NewMySQLRepository[T any](db Database, tableName string) *MySQLRepository[T] {
 	if !isValidRepositoryName(tableName) {
 		tType := reflect.TypeOf((*T)(nil)).Elem()
 		panic(fmt.Sprintf("invalid table name: `%s`, for type: `%s`", tableName, tType))
 	}
-	return &MySQLRepository[T]{MySQLDAL: db, tableName: tableName}
+	return &MySQLRepository[T]{db: db, tableName: tableName}
 }
 
 func (r *MySQLRepository[T]) GetByID(id string) (*T, error) {
