@@ -14,22 +14,6 @@ type MySQLDAL struct {
 	db *sql.DB
 }
 
-func (m *MySQLDAL) Exec(query string, args ...interface{}) (sql.Result, error) {
-	return m.db.Exec(query, args...)
-}
-
-func (m *MySQLDAL) Query(query string, args ...interface{}) (*sql.Rows, error) {
-	return m.db.Query(query, args...)
-}
-
-func (m *MySQLDAL) QueryRow(query string, args ...interface{}) *sql.Row {
-	return m.db.QueryRow(query, args...)
-}
-
-func (m *MySQLDAL) Ping() error {
-	return m.db.Ping()
-}
-
 func NewMySQLDAL(config config.MySQL) *MySQLDAL {
 	if config.CAPath != "" {
 		tlsConfig, err := utils.InitTLS(config.CAPath)
@@ -56,12 +40,28 @@ func NewMySQLDAL(config config.MySQL) *MySQLDAL {
 	return &MySQLDAL{db: db}
 }
 
-func (dal *MySQLDAL) Close() error {
-	return dal.db.Close()
+func (m *MySQLDAL) Exec(query string, args ...interface{}) (sql.Result, error) {
+	return m.db.Exec(query, args...)
 }
 
-func (dal *MySQLDAL) withTransaction(fn func(tx *sql.Tx) error) error {
-	tx, err := dal.db.Begin()
+func (m *MySQLDAL) Query(query string, args ...interface{}) (*sql.Rows, error) {
+	return m.db.Query(query, args...)
+}
+
+func (m *MySQLDAL) QueryRow(query string, args ...interface{}) *sql.Row {
+	return m.db.QueryRow(query, args...)
+}
+
+func (m *MySQLDAL) Ping() error {
+	return m.db.Ping()
+}
+
+func (m *MySQLDAL) Close() error {
+	return m.db.Close()
+}
+
+func (m *MySQLDAL) withTransaction(fn func(tx *sql.Tx) error) error {
+	tx, err := m.db.Begin()
 	if err != nil {
 		return err
 	}
