@@ -20,5 +20,5 @@ func NewObjectService(dal dal.DAL[models.Object]) *objectService {
 }
 
 func (o *objectService) Create(ctx context.Context, user, object string) error {
-	return o.dal.Create(&models.Object{ID: 123456543, ObjectID: object})
+	return o.dal.Create(ctx, &models.Object{ID: 123456543, ObjectID: object})
 }

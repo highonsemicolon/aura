@@ -1,6 +1,7 @@
 package dal
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 )
@@ -18,7 +19,7 @@ func NewMySQLRepository[T any](db Database, tableName string) *MySQLRepository[T
 	return &MySQLRepository[T]{db: db, tableName: tableName}
 }
 
-func (r *MySQLRepository[T]) GetByID(id string) (*T, error) {
+func (r *MySQLRepository[T]) GetByID(ctx context.Context, id string) (*T, error) {
 	query := fmt.Sprintf("SELECT * FROM %v WHERE id = ?", r.tableName)
 	row := r.db.QueryRow(query, id)
 
@@ -31,7 +32,7 @@ func (r *MySQLRepository[T]) GetByID(id string) (*T, error) {
 	return &entity, nil
 }
 
-func (r *MySQLRepository[T]) GetAll() ([]T, error) {
+func (r *MySQLRepository[T]) GetAll(ctx context.Context) ([]T, error) {
 	query := fmt.Sprintf("SELECT * FROM %v", r.tableName)
 	rows, err := r.db.Query(query)
 	if err != nil {
@@ -52,19 +53,19 @@ func (r *MySQLRepository[T]) GetAll() ([]T, error) {
 	return entities, nil
 }
 
-func (r *MySQLRepository[T]) Create(entity *T) error {
+func (r *MySQLRepository[T]) Create(ctx context.Context, entity *T) error {
 	query := fmt.Sprintf("INSERT INTO %v VALUES (?)", r.tableName)
 	_, err := r.db.Exec(query, entity)
 	return err
 }
 
-func (r *MySQLRepository[T]) Update(entity *T) error {
+func (r *MySQLRepository[T]) Update(ctx context.Context, entity *T) error {
 	query := fmt.Sprintf("UPDATE %v SET ? WHERE id = ?", r.tableName)
 	_, err := r.db.Exec(query, entity)
 	return err
 }
 
-func (r *MySQLRepository[T]) Delete(id string) error {
+func (r *MySQLRepository[T]) Delete(ctx context.Context, id string) error {
 	query := fmt.Sprintf("DELETE FROM %v WHERE id = ?", r.tableName)
 	_, err := r.db.Exec(query, id)
 	return err
