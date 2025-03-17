@@ -28,7 +28,7 @@ func infoHandler(c *gin.Context) {
 		"commit":        commitHash,
 		"build_time":    buildTime,
 		"build_host":    buildHost,
-		"start_time":    startTime,
+		"start_time":    startTime.Format(time.RFC3339),
 		"uptime":        uptime,
 		"hostname":      hostname,
 		"go_version":    runtime.Version(),
