@@ -2,6 +2,18 @@ BINARY_NAME ?= tmp/main
 GO_VERSION ?= 1.23.4
 GO_FLAGS ?= -v
 
+APP_NAME := Aura
+VERSION := 1.3.0
+COMMIT_HASH := $(shell git rev-parse HEAD)
+BUILD_TIME := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
+BUILD_HOST := $(shell hostname)
+MODULE := $(shell go list -m)
+LDFLAGS := -X '$(MODULE)/src/api.appName=$(APP_NAME)' \
+		   -X '$(MODULE)/src/api.version=$(VERSION)' \
+           -X '$(MODULE)/src/api.commitHash=$(COMMIT_HASH)' \
+           -X '$(MODULE)/src/api.buildTime=$(BUILD_TIME)' \
+           -X '$(MODULE)/src/api.buildHost=$(BUILD_HOST)'
+
 
 tidy:
 	go mod tidy
@@ -21,18 +33,18 @@ static-fix:
 	go run openapi/fix_errors.go ./src/api
 
 run:
-	go run ./src
+	go run -ldflags "$(LDFLAGS)" ./src
 
 run-hot:
 	air \
 	--build.pre_cmd="make tidy" \
-	--build.cmd="go build -o ./tmp/main ./src" \
+	--build.cmd="make build" \
 	--build.bin="./tmp/main"
 
 build:
 	@if [ ! -f src/main.go ]; then echo "Error: src/main.go not found!"; exit 1; fi
 	@echo "Building the Go application..."
-	go build $(GO_FLAGS) -o $(BINARY_NAME) src/main.go
+	go build $(GO_FLAGS)  -ldflags "$(LDFLAGS)" -o $(BINARY_NAME) ./src
 
 clean:
 	@echo "Cleaning up..."
