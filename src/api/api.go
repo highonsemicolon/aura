@@ -12,7 +12,8 @@ func NewAPI(services *service.ServiceContainer) *API {
 func (api *API) NewRouter() *gin.Engine {
 
 	router := gin.Default()
-	router.GET("/healthz", healthHandler)
+	router.GET("/readyz", readyHandler)
+	router.GET("/livez", liveHandler)
 	router.GET("/infoz", infoHandler)
 
 	server := NewStrictHandler(api, nil)
