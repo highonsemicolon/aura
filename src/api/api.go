@@ -12,9 +12,7 @@ func NewAPI(services *service.ServiceContainer) *API {
 func (api *API) NewRouter() *gin.Engine {
 
 	router := gin.Default()
-	router.GET("/readyz", readyHandler)
-	router.GET("/livez", liveHandler)
-	router.GET("/infoz", infoHandler)
+	NewSystemHandler().Register(router)
 
 	server := NewStrictHandler(api, nil)
 	RegisterHandlersWithOptions(router, server, GinServerOptions{BaseURL: "/api/v1"})

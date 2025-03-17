@@ -8,6 +8,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type systemHandler struct{}
+
+func NewSystemHandler() *systemHandler {
+	return &systemHandler{}
+}
+
+func (h *systemHandler) Register(router *gin.Engine) {
+	router.GET("/readyz", readyHandler)
+	router.GET("/livez", liveHandler)
+	router.GET("/infoz", infoHandler)
+}
+
 var (
 	appName    = "unknown"
 	version    = "unknown"
