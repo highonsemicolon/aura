@@ -13,6 +13,7 @@ func (api *API) NewRouter() *gin.Engine {
 
 	router := gin.Default()
 	router.GET("/healthz", func(c *gin.Context) { c.JSON(200, gin.H{"status": "ok"}) })
+	router.GET("/infoz", infoHandler)
 
 	server := NewStrictHandler(api, nil)
 	RegisterHandlersWithOptions(router, server, GinServerOptions{BaseURL: "/api/v1"})
