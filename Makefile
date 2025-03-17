@@ -1,5 +1,5 @@
 BINARY_NAME ?= tmp/main
-GO_VERSION ?= 1.23.4
+GO_VERSION ?= 1.23.6
 GO_FLAGS ?= -v
 
 APP_NAME := Aura
