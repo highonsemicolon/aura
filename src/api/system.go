@@ -44,3 +44,7 @@ func infoHandler(c *gin.Context) {
 	}
 	c.JSON(200, info)
 }
+
+func healthHandler(c *gin.Context) {
+	c.JSON(200, gin.H{"status": "ok"})
+}

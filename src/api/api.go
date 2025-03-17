@@ -12,7 +12,7 @@ func NewAPI(services *service.ServiceContainer) *API {
 func (api *API) NewRouter() *gin.Engine {
 
 	router := gin.Default()
-	router.GET("/healthz", func(c *gin.Context) { c.JSON(200, gin.H{"status": "ok"}) })
+	router.GET("/healthz", healthHandler)
 	router.GET("/infoz", infoHandler)
 
 	server := NewStrictHandler(api, nil)
