@@ -16,7 +16,7 @@ LDFLAGS := -X '$(MODULE)/src/api.appName=$(APP_NAME)' \
 
 
 tidy:
-	go mod tidy
+	@go mod tidy
 
 fmt:
 	@echo "Formatting Go code..."
@@ -44,7 +44,7 @@ run-hot:
 build:
 	@if [ ! -f src/main.go ]; then echo "Error: src/main.go not found!"; exit 1; fi
 	@echo "Building the Go application..."
-	go build $(GO_FLAGS)  -ldflags "$(LDFLAGS)" -o $(BINARY_NAME) ./src
+	@go build $(GO_FLAGS)  -ldflags "$(LDFLAGS)" -o $(BINARY_NAME) ./src
 
 clean:
 	@echo "Cleaning up..."
