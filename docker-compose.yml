@@ -2,8 +2,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
-      target: dev
+      dockerfile: dev.Dockerfile
     environment:
       APP_ENV: "dev"
       GIN_MODE: "release"
