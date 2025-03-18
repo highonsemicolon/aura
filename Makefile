@@ -5,7 +5,7 @@ GO_VERSION ?= 1.23.6
 GO_FLAGS ?= -v
 
 APP_NAME := Aura
-VERSION := 1.3.0
+VERSION := 0.1.0
 COMMIT_HASH := $(shell git rev-parse HEAD)
 BUILD_TIME := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 BUILD_HOST := $(shell hostname)
