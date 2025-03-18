@@ -1,3 +1,5 @@
+MAKEFLAGS += --no-print-directory
+
 BINARY_NAME ?= tmp/main
 GO_VERSION ?= 1.23.6
 GO_FLAGS ?= -v
@@ -43,7 +45,6 @@ run-hot:
 
 build:
 	@if [ ! -f src/main.go ]; then echo "Error: src/main.go not found!"; exit 1; fi
-	@echo "Building the Go application..."
 	@go build $(GO_FLAGS)  -ldflags "$(LDFLAGS)" -o $(BINARY_NAME) ./src
 
 clean:
