@@ -41,7 +41,9 @@ run-hot:
 	air \
 	--build.pre_cmd="make tidy" \
 	--build.cmd="make build" \
-	--build.bin="./tmp/main"
+	--build.bin="./tmp/main" \
+	--build.send_interrupt=true \
+	--build.kill_delay=2s
 
 build:
 	@if [ ! -f src/main.go ]; then echo "Error: src/main.go not found!"; exit 1; fi
