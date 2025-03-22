@@ -26,7 +26,7 @@ func NewHealthService(db dal.Database) *healthService {
 }
 
 func (s *healthService) Liveness(ctx context.Context) error {
-	return s.db.PingContext(ctx)
+	return nil
 }
 
 func (s *healthService) Readiness(ctx context.Context) readiness {

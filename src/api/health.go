@@ -1,7 +1,6 @@
 package api
 
 import (
-	"log"
 	"os"
 	"runtime"
 	"time"
@@ -59,10 +58,9 @@ func (h *API) readyHandler(c *gin.Context) {
 
 func (h *API) liveHandler(c *gin.Context) {
 	if err := h.svc.HealthService.Liveness(c.Request.Context()); err != nil {
-		log.Printf("liveness check failed: %v\n", err)
 		c.JSON(500, gin.H{"status": "error"})
 		return
 	}
 
-	c.JSON(200, gin.H{"status": "ok"})
+	c.JSON(200, gin.H{"status": "live"})
 }
