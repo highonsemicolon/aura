@@ -22,16 +22,14 @@ type App struct {
 	db     dal.Database
 }
 
-func NewApp() *App {
-	config := config.GetConfig()
+func NewApp(cfg *config.Config, db dal.Database) *App {
 
-	db := dal.NewMySQLDAL(config.MySQL)
-	repos := dal.NewDalContainer(db, config.Tables)
+	repos := dal.NewDalContainer(db, cfg.Tables)
 	services := service.NewServiceContainer(repos)
 	api := api.NewAPI(services)
 
 	return &App{
-		server: setupServer(config, api),
+		server: setupServer(cfg, api),
 		db:     db,
 	}
 }
@@ -40,7 +38,7 @@ func setupServer(cfg *config.Config, api *api.API) *server.Server {
 	return server.NewServer(cfg.Address, api.NewRouter())
 }
 
-func (app *App) Run() {
+func (app *App) Run(ctx context.Context) {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	serverErr := make(chan error, 1)
@@ -58,12 +56,11 @@ func (app *App) Run() {
 		log.Println("received signal to shutdown server")
 	}
 
-	app.gracefulShutdown()
+	app.gracefulShutdown(ctx)
 }
 
-func (app *App) gracefulShutdown() {
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func (app *App) gracefulShutdown(ctx context.Context) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	if err := app.server.Shutdown(ctx); err != nil {

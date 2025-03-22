@@ -1,21 +1,27 @@
 package main
 
-import "github.com/highonsemicolon/aura/src/app"
+import (
+	"context"
+
+	"github.com/highonsemicolon/aura/config"
+	"github.com/highonsemicolon/aura/src/app"
+	"github.com/highonsemicolon/aura/src/dal"
+)
 
 func main() {
-	// config := config.GetConfig()
+	cfg := config.GetConfig()
 
-	// db := dal.NewMySQLDAL(config.MySQL)
-	// defer db.Close()
-
-	// permissionRepo := dal.NewRelationshipRepository(db, config.Tables["relationships"])
+	db := dal.NewMySQLDAL(cfg.MySQL)
+	// permissionRepo := dal.NewRelationshipRepository(db, cfg.Tables["relationships"])
 	// handlePermissionOperations(permissionRepo)
 
-	// srv := server.NewServer(config.Address)
+	// srv := server.NewServer(cfg.Address)
 	// defer srv.Shutdown()
 
 	// srv.StartAndWait()
 
-	app := app.NewApp()
-	app.Run()
+	ctx := context.Background()
+
+	app := app.NewApp(cfg, db)
+	app.Run(ctx)
 }
