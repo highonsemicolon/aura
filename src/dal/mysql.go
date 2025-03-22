@@ -13,7 +13,7 @@ import (
 )
 
 type MySQLDAL struct {
-	db *sql.DB
+	conn *sql.DB
 }
 
 func NewMySQLDAL(config config.MySQL) *MySQLDAL {
@@ -26,47 +26,47 @@ func NewMySQLDAL(config config.MySQL) *MySQLDAL {
 		mysql.RegisterTLSConfig("custom", tlsConfig)
 	}
 
-	db, err := sql.Open("mysql", config.DSN)
+	Conn, err := sql.Open("mysql", config.DSN)
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
 
-	db.SetMaxOpenConns(config.MaxOpenConns)
-	db.SetMaxIdleConns(config.MaxIdleConns)
-	db.SetConnMaxLifetime(config.ConnMaxLifetime)
+	Conn.SetMaxOpenConns(config.MaxOpenConns)
+	Conn.SetMaxIdleConns(config.MaxIdleConns)
+	Conn.SetConnMaxLifetime(config.ConnMaxLifetime)
 
-	if err := db.Ping(); err != nil {
+	if err := Conn.Ping(); err != nil {
 		log.Fatal("Database is unreachable:", err)
 	}
 
-	return &MySQLDAL{db: db}
+	return &MySQLDAL{conn: Conn}
 }
 
-func (m *MySQLDAL) Exec(query string, args ...interface{}) (sql.Result, error) {
-	return m.db.Exec(query, args...)
+func (m *MySQLDAL) Exec(query string, args ...any) (sql.Result, error) {
+	return m.conn.Exec(query, args...)
 }
 
-func (m *MySQLDAL) Query(query string, args ...interface{}) (*sql.Rows, error) {
-	return m.db.Query(query, args...)
+func (m *MySQLDAL) Query(query string, args ...any) (*sql.Rows, error) {
+	return m.conn.Query(query, args...)
 }
 
-func (m *MySQLDAL) QueryRow(query string, args ...interface{}) *sql.Row {
-	return m.db.QueryRow(query, args...)
+func (m *MySQLDAL) QueryRow(query string, args ...any) *sql.Row {
+	return m.conn.QueryRow(query, args...)
 }
 
 func (m *MySQLDAL) PingContext(ctx context.Context) error {
-	if m.db == nil {
+	if m.conn == nil {
 		return errors.New("database connection is nil")
 	}
-	return m.db.PingContext(ctx)
+	return m.conn.PingContext(ctx)
 }
 
 func (m *MySQLDAL) Close() error {
-	return m.db.Close()
+	return m.conn.Close()
 }
 
 func (m *MySQLDAL) withTransaction(fn func(tx *sql.Tx) error) error {
-	tx, err := m.db.Begin()
+	tx, err := m.conn.Begin()
 	if err != nil {
 		return err
 	}
