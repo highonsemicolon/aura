@@ -35,7 +35,7 @@ static-fix:
 	go run openapi/fix_errors.go ./src/api
 
 run:
-	go run -ldflags "$(LDFLAGS)" ./src
+	@go run -ldflags "$(LDFLAGS)" ./src
 
 run-hot:
 	air \
