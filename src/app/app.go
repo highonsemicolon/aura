@@ -58,6 +58,11 @@ func (app *App) Run() {
 		log.Println("received signal to shutdown server")
 	}
 
+	app.gracefulShutdown()
+}
+
+func (app *App) gracefulShutdown() {
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
