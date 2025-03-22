@@ -6,10 +6,12 @@ import (
 
 type ServiceContainer struct {
 	ObjectService ObjectService
+	HealthService HealthService
 }
 
 func NewServiceContainer(repo *dal.DalContainer) *ServiceContainer {
 	return &ServiceContainer{
 		ObjectService: NewObjectService(repo.Objects),
+		HealthService: NewHealthService(repo.DB),
 	}
 }

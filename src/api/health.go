@@ -8,18 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type systemHandler struct{}
-
-func NewSystemHandler() *systemHandler {
-	return &systemHandler{}
-}
-
-func (h *systemHandler) Register(router *gin.Engine) {
-	router.GET("/readyz", readyHandler)
-	router.GET("/livez", liveHandler)
-	router.GET("/infoz", infoHandler)
-}
-
 var (
 	appName    = "unknown"
 	version    = "unknown"
@@ -29,7 +17,13 @@ var (
 	startTime  = time.Now()
 )
 
-func infoHandler(c *gin.Context) {
+func (h *API) RegisterHealthHandler(router *gin.Engine) {
+	router.GET("/readyz", h.readyHandler)
+	router.GET("/livez", h.liveHandler)
+	router.GET("/infoz", h.infoHandler)
+}
+
+func (h *API) infoHandler(c *gin.Context) {
 	hostname, _ := os.Hostname()
 	uptime := time.Since(startTime).String()
 
@@ -57,10 +51,16 @@ func infoHandler(c *gin.Context) {
 	c.JSON(200, info)
 }
 
-func readyHandler(c *gin.Context) {
-	c.JSON(200, gin.H{"status": "ok"})
+func (h *API) readyHandler(c *gin.Context) {
+	ready := h.svc.HealthService.Readiness(c.Request.Context())
+	c.JSON(200, ready)
 }
 
-func liveHandler(c *gin.Context) {
+func (h *API) liveHandler(c *gin.Context) {
+	if err := h.svc.HealthService.Liveness(c.Request.Context()); err != nil {
+		c.JSON(500, gin.H{"status": "error"})
+		return
+	}
+
 	c.JSON(200, gin.H{"status": "ok"})
 }

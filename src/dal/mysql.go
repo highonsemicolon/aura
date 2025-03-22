@@ -1,7 +1,9 @@
 package dal
 
 import (
+	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 
@@ -52,8 +54,11 @@ func (m *MySQLDAL) QueryRow(query string, args ...interface{}) *sql.Row {
 	return m.db.QueryRow(query, args...)
 }
 
-func (m *MySQLDAL) Ping() error {
-	return m.db.Ping()
+func (m *MySQLDAL) PingContext(ctx context.Context) error {
+	if m.db == nil {
+		return errors.New("database connection is nil")
+	}
+	return m.db.PingContext(ctx)
 }
 
 func (m *MySQLDAL) Close() error {

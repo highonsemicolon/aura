@@ -9,7 +9,8 @@ type Database interface {
 	Exec(query string, args ...any) (sql.Result, error)
 	Query(query string, args ...any) (*sql.Rows, error)
 	QueryRow(query string, args ...any) *sql.Row
-	Ping() error
+	PingContext(context.Context) error
+	Close() error
 }
 
 type DAL[T any] interface {
