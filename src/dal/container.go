@@ -17,7 +17,3 @@ func NewDalContainer(db Database, tables map[string]string) *DalContainer {
 		relationships: NewRelationshipRepository(db, tables["relationships"]),
 	}
 }
-
-func (d *DalContainer) Close() error {
-	return d.DB.Close()
-}

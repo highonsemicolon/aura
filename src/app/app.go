@@ -19,7 +19,7 @@ import (
 
 type App struct {
 	server *server.Server
-	repos  *dal.DalContainer
+	db     dal.Database
 }
 
 func NewApp() *App {
@@ -32,7 +32,7 @@ func NewApp() *App {
 
 	return &App{
 		server: setupServer(config, api),
-		repos:  repos,
+		db:     db,
 	}
 }
 
@@ -65,7 +65,7 @@ func (app *App) Run() {
 		log.Fatalf("shutdown error: %v", err)
 	}
 
-	if err := app.repos.Close(); err != nil {
+	if err := app.db.Close(); err != nil {
 		log.Fatalf("db close error: %v", err)
 	}
 

@@ -30,9 +30,6 @@ func (s *healthService) Liveness(ctx context.Context) error {
 }
 
 func (s *healthService) Readiness(ctx context.Context) readiness {
-	if s.db == nil {
-		return readiness{Database: false}
-	}
 	dbReady := s.db.PingContext(ctx) == nil
 	return readiness{Database: dbReady}
 }
