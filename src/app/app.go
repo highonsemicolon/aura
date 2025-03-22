@@ -19,6 +19,7 @@ import (
 
 type App struct {
 	server *server.Server
+	db    *dal.MySQLDAL
 }
 
 func NewApp() *App {
@@ -31,6 +32,7 @@ func NewApp() *App {
 
 	return &App{
 		server: setupServer(config, api),
+		db: db,
 	}
 }
 
@@ -61,6 +63,10 @@ func (app *App) Run() {
 
 	if err := app.server.Shutdown(ctx); err != nil {
 		log.Fatalf("shutdown error: %v", err)
+	}
+
+	if err := app.db.Close(); err != nil {
+		log.Fatalf("db close error: %v", err)
 	}
 
 	log.Println("server shutdown gracefully")
