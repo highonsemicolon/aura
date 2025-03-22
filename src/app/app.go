@@ -27,29 +27,38 @@ func NewApp() *App {
 	db := dal.NewMySQLDAL(config.MySQL)
 	repos := dal.NewDalContainer(db, config.Tables)
 	services := service.NewServiceContainer(repos)
-
 	api := api.NewAPI(services)
 
-	srv := server.NewServer(config.Address, api.NewRouter())
-	return &App{server: srv}
+	return &App{
+		server: setupServer(config, api),
+	}
+}
+
+func setupServer(cfg *config.Config, api *api.API) *server.Server {
+	return server.NewServer(cfg.Address, api.NewRouter())
 }
 
 func (app *App) Run() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	serverErr := make(chan error, 1)
 
 	go func() {
 		if err := app.server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("server failed: %s\n", err)
+			serverErr <- err
 		}
 	}()
 
-	<-quit
+	select {
+	case err := <-serverErr:
+		log.Printf("server error: %v\n", err)
+	case <-quit:
+		log.Println("received signal to shutdown server")
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	log.Println("shutting down server...")
 	if err := app.server.Shutdown(ctx); err != nil {
 		log.Fatalf("shutdown error: %v", err)
 	}
