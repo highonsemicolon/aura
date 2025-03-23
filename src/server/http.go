@@ -7,10 +7,10 @@ import (
 )
 
 type HttpServer struct {
-	server Server
+	server *http.Server
 }
 
-func NewServer(addr string, handler http.Handler) *HttpServer {
+func NewHttpServer(addr string, handler http.Handler) *HttpServer {
 
 	return &HttpServer{
 		server: &http.Server{

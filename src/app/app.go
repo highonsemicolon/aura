@@ -35,7 +35,7 @@ func NewApp(cfg *config.Config, db dal.Database) *App {
 }
 
 func setupServer(cfg *config.Config, api *api.API) *server.HttpServer {
-	return server.NewServer(cfg.Address, api.NewRouter())
+	return server.NewHttpServer(cfg.Address, api.NewRouter())
 }
 
 func (app *App) Run(ctx context.Context) {
