@@ -18,7 +18,7 @@ import (
 )
 
 type App struct {
-	server *server.Server
+	server server.Server
 	db     dal.Database
 }
 
@@ -34,7 +34,7 @@ func NewApp(cfg *config.Config, db dal.Database) *App {
 	}
 }
 
-func setupServer(cfg *config.Config, api *api.API) *server.Server {
+func setupServer(cfg *config.Config, api *api.API) *server.HttpServer {
 	return server.NewServer(cfg.Address, api.NewRouter())
 }
 

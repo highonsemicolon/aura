@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-type HTTPServer interface {
+type Server interface {
 	ListenAndServe() error
 	Shutdown(ctx context.Context) error
 }

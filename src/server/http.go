@@ -6,14 +6,14 @@ import (
 	"time"
 )
 
-type Server struct {
-	httpServer HTTPServer
+type HttpServer struct {
+	server Server
 }
 
-func NewServer(addr string, handler http.Handler) *Server {
+func NewServer(addr string, handler http.Handler) *HttpServer {
 
-	return &Server{
-		httpServer: &http.Server{
+	return &HttpServer{
+		server: &http.Server{
 			Addr:              addr,
 			Handler:           handler,
 			ReadTimeout:       5 * time.Second,
@@ -25,10 +25,10 @@ func NewServer(addr string, handler http.Handler) *Server {
 	}
 }
 
-func (s *Server) ListenAndServe() error {
-	return s.httpServer.ListenAndServe()
+func (s *HttpServer) ListenAndServe() error {
+	return s.server.ListenAndServe()
 }
 
-func (s *Server) Shutdown(ctx context.Context) error {
-	return s.httpServer.Shutdown(ctx)
+func (s *HttpServer) Shutdown(ctx context.Context) error {
+	return s.server.Shutdown(ctx)
 }
