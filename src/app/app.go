@@ -64,11 +64,11 @@ func (app *App) gracefulShutdown(ctx context.Context) {
 	defer cancel()
 
 	if err := app.server.Shutdown(ctx); err != nil {
-		log.Fatalf("shutdown error: %v", err)
+		log.Printf("shutdown error: %v", err)
 	}
 
 	if err := app.db.Close(); err != nil {
-		log.Fatalf("db close error: %v", err)
+		log.Printf("db close error: %v", err)
 	}
 
 	log.Println("server shutdown gracefully")
