@@ -13,42 +13,32 @@ type LoggerService struct {
 }
 
 func New(format, level string) *LoggerService {
+	return NewWithWriter(format, level, os.Stderr)
+}
+
+func NewWithWriter(format, level string, writer io.Writer) *LoggerService {
 	format = strings.ToLower(format)
 	level = strings.ToLower(level)
 
-	var writer io.Writer
+	var logWriter io.Writer
 	if format == "json" {
-		writer = os.Stderr
+		logWriter = writer
 	} else {
-		writer = zerolog.ConsoleWriter{Out: os.Stderr}
+		logWriter = zerolog.ConsoleWriter{Out: writer}
 	}
 
-	logger := zerolog.New(writer).With().
+	parsedLevel, err := zerolog.ParseLevel(level)
+	if err != nil {
+		parsedLevel = zerolog.InfoLevel
+	}
+
+	logger := zerolog.New(logWriter).
+		Level(parsedLevel).
+		With().
 		Timestamp().
 		Logger()
 
-	ls := &LoggerService{
+	return &LoggerService{
 		Logger: &logger,
-	}
-	ls.setLevel(level)
-	return ls
-}
-
-func (ls *LoggerService) setLevel(level string) {
-	switch level {
-	case "debug":
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-	case "info":
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	case "warn":
-		zerolog.SetGlobalLevel(zerolog.WarnLevel)
-	case "error":
-		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
-	case "fatal":
-		zerolog.SetGlobalLevel(zerolog.FatalLevel)
-	case "panic":
-		zerolog.SetGlobalLevel(zerolog.PanicLevel)
-	default:
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	}
 }
