@@ -14,6 +14,6 @@ func main() {
 		logger.Error().Msg("failed to load config: " + err.Error())
 	}
 
-	logger.Info().Msgf("Service Name: %s", cfg.ServiceName)
+	logger.Debug().Msgf("service Name: %s", cfg.ServiceName)
 
 }
