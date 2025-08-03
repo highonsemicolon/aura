@@ -3,6 +3,7 @@ package config
 import (
 	"strings"
 
+	"github.com/go-playground/validator"
 	"github.com/highonsemicolon/aura/internal/logger"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/providers/env"
@@ -37,7 +38,12 @@ func LoadConfig(logger *logger.LoggerService) (*Config, error) {
 		logger.Fatal().Err(err).Msg("could not unmarshal main config")
 	}
 
-	logger.SetLevel(mainConfig.LogLevel)
+	validate := validator.New()
+
+	err = validate.Struct(mainConfig)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("config validation failed")
+	}
 
 	return mainConfig, nil
 }
