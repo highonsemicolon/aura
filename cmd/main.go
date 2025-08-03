@@ -1,18 +1,19 @@
 package main
 
 import (
-	"log"
-
 	"github.com/highonsemicolon/aura/internal/config"
+	"github.com/highonsemicolon/aura/internal/logger"
 )
 
 func main() {
 
-	cfg, err := config.LoadConfig()
+	logger := logger.New()
+
+	cfg, err := config.LoadConfig(logger)
 	if err != nil {
-		panic("failed to load config: " + err.Error())
+		logger.Error().Msg("failed to load config: " + err.Error())
 	}
 
-	log.Printf("Service Name: %s", cfg.ServiceName)
+	logger.Info().Msgf("Service Name: %s", cfg.ServiceName)
 
 }

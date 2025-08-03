@@ -1,15 +1,13 @@
 package config
 
 import (
-	"os"
 	"strings"
 
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/providers/env"
+	"github.com/rs/zerolog"
 
 	_ "github.com/joho/godotenv/autoload"
-
-	"github.com/rs/zerolog"
 )
 
 type Config struct {
@@ -22,9 +20,7 @@ type Config struct {
 
 var k = koanf.New(".")
 
-func LoadConfig() (*Config, error) {
-
-	logger := zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().Logger()
+func LoadConfig(logger *zerolog.Logger) (*Config, error) {
 
 	err := k.Load(env.Provider("BOILERPLATE_", ".", func(s string) string {
 		return strings.ToLower(strings.TrimPrefix(s, "BOILERPLATE_"))
