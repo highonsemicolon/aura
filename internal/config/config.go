@@ -12,15 +12,19 @@ import (
 )
 
 type Config struct {
-	ServiceName string `koanf:"service_name" validate:"required"`
-	Port        int    `koanf:"port" validate:"required"`
-	OTEL        struct {
-		Endpoint string `koanf:"endpoint" validate:"required"`
-	}
-	Logging struct {
-		Level  string `koanf:"level" validate:"required,oneof=debug info warn error fatal panic"`
-		Format string `koanf:"format" validate:"required,oneof=json console" default:"console"`
-	}
+	ServiceName string  `koanf:"service_name" validate:"required"`
+	Port        int     `koanf:"port" validate:"required"`
+	OTEL        OTEL    `koanf:"otel"`
+	Logging     Logging `koanf:"logging"`
+}
+
+type Logging struct {
+	Level  string `koanf:"level" validate:"required,oneof=debug info warn error fatal panic"`
+	Format string `koanf:"format" validate:"required,oneof=json console"`
+}
+
+type OTEL struct {
+	Endpoint string `koanf:"endpoint" validate:"required"`
 }
 
 var k = koanf.New(".")
