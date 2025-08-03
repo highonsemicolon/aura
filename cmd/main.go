@@ -7,13 +7,8 @@ import (
 
 func main() {
 
-	logger := logger.New()
+	cfg := config.LoadConfig()
+	logger := logger.New(cfg.Logging.Format, cfg.Logging.Level)
 
-	cfg, err := config.LoadConfig(logger)
-	if err != nil {
-		logger.Error().Msg("failed to load config: " + err.Error())
-	}
-
-	logger.Debug().Msgf("service Name: %s", cfg.ServiceName)
-
+	logger.Debug().Msgf("service name: %s", cfg.ServiceName)
 }

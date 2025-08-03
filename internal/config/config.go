@@ -17,15 +17,19 @@ type Config struct {
 	OTEL        struct {
 		Endpoint string `koanf:"endpoint" validate:"required"`
 	}
-	LogLevel string `koanf:"log_level" validate:"required,oneof=debug info warn error fatal panic"`
+	Logging struct {
+		Level  string `koanf:"level" validate:"required,oneof=debug info warn error fatal panic"`
+		Format string `koanf:"format" validate:"required,oneof=json console" default:"console"`
+	}
 }
 
 var k = koanf.New(".")
 
-func LoadConfig(logger *logger.LoggerService) (*Config, error) {
+func LoadConfig() *Config {
+	logger := logger.New("json", "info")
 
-	err := k.Load(env.Provider("BOILERPLATE_", ".", func(s string) string {
-		return strings.ToLower(strings.TrimPrefix(s, "BOILERPLATE_"))
+	err := k.Load(env.Provider("TEMPLATE_", ".", func(s string) string {
+		return strings.ToLower(strings.TrimPrefix(s, "TEMPLATE_"))
 	}), nil)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("could not load initial env variables")
@@ -45,5 +49,5 @@ func LoadConfig(logger *logger.LoggerService) (*Config, error) {
 		logger.Fatal().Err(err).Msg("config validation failed")
 	}
 
-	return mainConfig, nil
+	return mainConfig
 }

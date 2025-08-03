@@ -1,7 +1,9 @@
 package logger
 
 import (
+	"io"
 	"os"
+	"strings"
 
 	"github.com/rs/zerolog"
 )
@@ -10,18 +12,29 @@ type LoggerService struct {
 	*zerolog.Logger
 }
 
-func New() *LoggerService {
-	logger := zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).With().
+func New(format, level string) *LoggerService {
+	format = strings.ToLower(format)
+	level = strings.ToLower(level)
+
+	var writer io.Writer
+	if format == "json" {
+		writer = os.Stderr
+	} else {
+		writer = zerolog.ConsoleWriter{Out: os.Stderr}
+	}
+
+	logger := zerolog.New(writer).With().
 		Timestamp().
 		Logger()
 
-	return &LoggerService{
+	ls := &LoggerService{
 		Logger: &logger,
 	}
+	ls.setLevel(level)
+	return ls
 }
 
-func (ls *LoggerService) SetLevel(level string) {
-	ls.Logger.Info().Msgf("setting log level to %s", level)
+func (ls *LoggerService) setLevel(level string) {
 	switch level {
 	case "debug":
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
