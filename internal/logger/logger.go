@@ -42,3 +42,17 @@ func NewWithWriter(format, level string, writer io.Writer) *LoggerService {
 		Logger: &logger,
 	}
 }
+
+func (ls *LoggerService) WithField(key string, value interface{}) *LoggerService {
+	newLogger := ls.Logger.With().Interface(key, value).Logger()
+	return &LoggerService{Logger: &newLogger}
+}
+
+func (ls *LoggerService) WithFields(fields map[string]interface{}) *LoggerService {
+	ctx := ls.Logger.With()
+	for k, v := range fields {
+		ctx = ctx.Interface(k, v)
+	}
+	newLogger := ctx.Logger()
+	return &LoggerService{Logger: &newLogger}
+}
