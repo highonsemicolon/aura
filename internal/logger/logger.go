@@ -8,15 +8,29 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type LoggerService struct {
-	*zerolog.Logger
+type Logger interface {
+	Debug(msg string)
+	Info(msg string)
+	Warn(msg string, errs ...error)
+	Error(msg string, errs ...error)
+	Fatal(msg string, errs ...error)
+
+	DebugF(format string, args ...any)
+	InfoF(format string, args ...any)
+	WarnF(format string, args ...any)
+	ErrorF(format string, args ...any)
+	FatalF(format string, args ...any)
+
+	WithField(key string, value any) Logger
+	WithFields(fields map[string]any) Logger
 }
 
-func New(format, level string) *LoggerService {
-	return NewWithWriter(format, level, os.Stderr)
+type zerologAdapter struct {
+	logger *zerolog.Logger
 }
 
-func NewWithWriter(format, level string, writer io.Writer) *LoggerService {
+func NewZerologAdapter(format, level string) Logger {
+	writer := os.Stdout
 	format = strings.ToLower(format)
 	level = strings.ToLower(level)
 
@@ -38,21 +52,71 @@ func NewWithWriter(format, level string, writer io.Writer) *LoggerService {
 		Timestamp().
 		Logger()
 
-	return &LoggerService{
-		Logger: &logger,
+	return &zerologAdapter{
+		logger: &logger,
 	}
 }
 
-func (ls *LoggerService) WithField(key string, value interface{}) *LoggerService {
-	newLogger := ls.Logger.With().Interface(key, value).Logger()
-	return &LoggerService{Logger: &newLogger}
+func (z *zerologAdapter) Debug(msg string) {
+	z.logger.Debug().Msg(msg)
 }
 
-func (ls *LoggerService) WithFields(fields map[string]interface{}) *LoggerService {
-	ctx := ls.Logger.With()
+func (z *zerologAdapter) Info(msg string) {
+	z.logger.Info().Msg(msg)
+}
+
+func (z *zerologAdapter) Warn(msg string, errs ...error) {
+	events := z.logger.Warn()
+	if len(errs) > 0 {
+		events = events.Errs("errors", errs)
+	}
+	events.Msg(msg)
+}
+
+func (z *zerologAdapter) Error(msg string, errs ...error) {
+	events := z.logger.Error()
+	if len(errs) > 0 {
+		events = events.Errs("errors", errs)
+	}
+	events.Msg(msg)
+}
+
+func (z *zerologAdapter) Fatal(msg string, errs ...error) {
+	event := z.logger.Fatal()
+
+	if len(errs) > 0 {
+		event = event.Errs("errors", errs)
+	}
+
+	event.Msg(msg)
+}
+
+func (z *zerologAdapter) DebugF(format string, args ...any) {
+	z.logger.Debug().Msgf(format, args...)
+}
+func (z *zerologAdapter) InfoF(format string, args ...any) {
+	z.logger.Info().Msgf(format, args...)
+}
+func (z *zerologAdapter) WarnF(format string, args ...any) {
+	z.logger.Warn().Msgf(format, args...)
+}
+func (z *zerologAdapter) ErrorF(format string, args ...any) {
+	z.logger.Error().Msgf(format, args...)
+}
+func (z *zerologAdapter) FatalF(format string, args ...any) {
+	z.logger.Fatal().Msgf(format, args...)
+}
+
+func (z *zerologAdapter) WithField(key string, value any) Logger {
+	newLogger := z.logger.With().Interface(key, value).Logger()
+	return &zerologAdapter{logger: &newLogger}
+}
+
+func (z *zerologAdapter) WithFields(fields map[string]any) Logger {
+	ctx := z.logger.With()
 	for k, v := range fields {
 		ctx = ctx.Interface(k, v)
 	}
 	newLogger := ctx.Logger()
-	return &LoggerService{Logger: &newLogger}
+	return &zerologAdapter{logger: &newLogger}
 }

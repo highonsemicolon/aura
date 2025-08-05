@@ -8,7 +8,7 @@ import (
 func main() {
 
 	cfg := config.LoadConfig()
-	logger := logger.New(cfg.Logging.Format, cfg.Logging.Level)
+	logger := logger.NewZerologAdapter(cfg.Logging.Format, cfg.Logging.Level)
 
-	logger.Debug().Msgf("service name: %s", cfg.ServiceName)
+	logger.DebugF("service name: %s", cfg.ServiceName)
 }

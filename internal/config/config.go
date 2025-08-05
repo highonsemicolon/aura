@@ -30,27 +30,27 @@ type OTEL struct {
 var k = koanf.New(".")
 
 func LoadConfig() *Config {
-	logger := logger.New("json", "info")
+	logger := logger.NewZerologAdapter("json", "info")
 
 	err := k.Load(env.Provider("TEMPLATE_", ".", func(s string) string {
 		return strings.ToLower(strings.TrimPrefix(s, "TEMPLATE_"))
 	}), nil)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("could not load initial env variables")
+		logger.Fatal("could not load initial env variables")
 	}
 
 	mainConfig := &Config{}
 
 	err = k.Unmarshal("", mainConfig)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("could not unmarshal main config")
+		logger.Fatal("could not unmarshal main config", err)
 	}
 
 	validate := validator.New()
 
 	err = validate.Struct(mainConfig)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("config validation failed")
+		logger.Fatal("config validation failed", err)
 	}
 
 	return mainConfig
