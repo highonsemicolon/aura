@@ -11,12 +11,12 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 )
 
-func InitTracer(serviceName string) func() {
+func InitTracer(serviceName, endpoint string) func() {
 	logger := logger.NewZerologAdapter("json", "info")
 
 	exp, err := otlptracehttp.New(
 		context.Background(),
-		otlptracehttp.WithEndpoint("localhost:4317"),
+		otlptracehttp.WithEndpoint(endpoint),
 	)
 	if err != nil {
 		logger.Fatal("Failed to create trace exporter", err)

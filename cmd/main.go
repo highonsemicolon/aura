@@ -14,7 +14,7 @@ func main() {
 	cfg := config.LoadConfig()
 	logger := logger.NewZerologAdapter(cfg.Logging.Format, cfg.Logging.Level)
 
-	telemetryShutdown := telemetry.InitTracer(cfg.ServiceName)
+	telemetryShutdown := telemetry.InitTracer(cfg.ServiceName, cfg.OTEL.Endpoint)
 	defer telemetryShutdown()
 
 	http.Handle("/", otelhttp.NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
