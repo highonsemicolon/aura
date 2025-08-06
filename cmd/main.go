@@ -10,6 +10,20 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
+func rootHandler(w http.ResponseWriter, r *http.Request) {
+	tracer := telemetry.Tracer("github.com/highonsemicolon/aura/cmd/main")
+	_, span := tracer.Start(r.Context(), "processing-root-request")
+	defer span.End()
+
+	span.SetAttributes(
+		attribute.String("handler", "root"),
+		attribute.String("method", r.Method),
+	)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Hello!"))
+}
+
 func main() {
 
 	cfg := config.LoadConfig()
@@ -18,20 +32,7 @@ func main() {
 	telemetryShutdown := telemetry.InitTracer(cfg.ServiceName, cfg.OTEL.Endpoint)
 	defer telemetryShutdown()
 
-	http.Handle("/", otelhttp.NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		tracer := telemetry.Tracer("github.com/highonsemicolon/aura/cmd/main")
-		_, span := tracer.Start(r.Context(), "processing-root-request")
-		defer span.End()
-
-		span.SetAttributes(
-			attribute.String("handler", "root"),
-			attribute.String("method", r.Method),
-		)
-
-		http.ResponseWriter.WriteHeader(w, http.StatusOK)
-		w.Write([]byte("Hello!"))
-	}), "RootHandler"))
+	http.Handle("/", otelhttp.NewHandler(http.HandlerFunc(rootHandler), "RootHandler"))
 
 	logger.DebugF("service name: %s", cfg.ServiceName)
 
