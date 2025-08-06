@@ -7,6 +7,7 @@ import (
 	"github.com/highonsemicolon/aura/internal/logger"
 	"github.com/highonsemicolon/aura/internal/telemetry"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 func main() {
@@ -18,6 +19,15 @@ func main() {
 	defer telemetryShutdown()
 
 	http.Handle("/", otelhttp.NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		tracer := telemetry.Tracer("github.com/highonsemicolon/aura/cmd/main")
+		_, span := tracer.Start(r.Context(), "processing-root-request")
+		defer span.End()
+
+		span.SetAttributes(
+			attribute.String("handler", "root"),
+			attribute.String("method", r.Method),
+		)
 
 		http.ResponseWriter.WriteHeader(w, http.StatusOK)
 		w.Write([]byte("Hello!"))

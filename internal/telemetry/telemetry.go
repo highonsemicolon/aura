@@ -9,7 +9,10 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	"go.opentelemetry.io/otel/trace"
 )
+
+var tracerProvider *sdktrace.TracerProvider
 
 func InitTracer(serviceName, endpoint string) func() {
 	logger := logger.NewZerologAdapter("json", "info")
@@ -30,7 +33,9 @@ func InitTracer(serviceName, endpoint string) func() {
 		)),
 	)
 
+	tracerProvider = tp
 	otel.SetTracerProvider(tp)
+
 	logger.Info("OpenTelemetry tracer initialized")
 
 	return func() {
@@ -38,4 +43,8 @@ func InitTracer(serviceName, endpoint string) func() {
 			logger.Error("Error shutting down tracer provider", err)
 		}
 	}
+}
+
+func Tracer(name string) trace.Tracer {
+	return tracerProvider.Tracer(name)
 }
