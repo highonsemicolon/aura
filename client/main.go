@@ -3,15 +3,18 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
-	"time"
 
+	pb "github.com/highonsemicolon/aura/internal/proto/greeter"
 	"github.com/highonsemicolon/aura/internal/telemetry"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
@@ -20,34 +23,40 @@ func main() {
 		endpoint = "localhost:4318"
 	}
 
-	telemetryShutdown := telemetry.InitTracer("http-client-service", endpoint)
+	telemetryShutdown := telemetry.InitTracer("grpc-client-service", endpoint)
 	defer telemetryShutdown()
 
-	client := http.Client{
-		Transport: otelhttp.NewTransport(http.DefaultTransport),
-		Timeout:   5 * time.Second,
-	}
+	tracer := otel.Tracer("grpc-client")
 
-	tracer := otel.Tracer("http-client")
-
-	ctx, span := tracer.Start(context.Background(), "call-traced-server")
+	ctx, span := tracer.Start(context.Background(), "call-grpc-server")
 	defer span.End()
 
 	span.SetAttributes(
-		attribute.String("client", "my-http-client"),
+		attribute.String("client", "my-grpc-client"),
 	)
 
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "http://localhost:8080/", nil)
-
-	res, err := client.Do(req)
+	conn, err := grpc.NewClient(
+		"localhost:50051",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+	)
 	if err != nil {
 		span.RecordError(err)
-		span.SetAttributes(attribute.String("error", err.Error()))
-		fmt.Println("Request failed:", err)
+		span.SetAttributes(attribute.String("connection_error", err.Error()))
+		fmt.Println("Failed to connect:", err)
 		return
 	}
-	defer res.Body.Close()
+	defer conn.Close()
 
-	body, _ := io.ReadAll(res.Body)
-	fmt.Printf("Response: %s\n", string(body))
+	client := pb.NewGreeterClient(conn)
+
+	resp, err := client.SayHello(ctx, &pb.HelloRequest{Name: "Aura"})
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("grpc_error", err.Error()))
+		fmt.Println("gRPC request failed:", err)
+		return
+	}
+
+	fmt.Println("Response:", resp.Message)
 }

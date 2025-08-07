@@ -1,43 +1,57 @@
 package main
 
 import (
-	"net/http"
+	"context"
+	"fmt"
+	"net"
 
 	"github.com/highonsemicolon/aura/internal/config"
 	"github.com/highonsemicolon/aura/internal/logger"
+	pb "github.com/highonsemicolon/aura/internal/proto/greeter"
 	"github.com/highonsemicolon/aura/internal/telemetry"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"google.golang.org/grpc"
 )
 
-func rootHandler(w http.ResponseWriter, r *http.Request) {
-	tracer := telemetry.Tracer("github.com/highonsemicolon/aura/cmd/main")
-	_, span := tracer.Start(r.Context(), "processing-root-request")
+type server struct {
+	pb.UnimplementedGreeterServer
+}
+
+func (s *server) SayHello(ctx context.Context, req *pb.HelloRequest) (*pb.HelloResponse, error) {
+	tracer := otel.Tracer("github.com/highonsemicolon/aura/cmd/grpc")
+	_, span := tracer.Start(ctx, "SayHello")
 	defer span.End()
 
 	span.SetAttributes(
-		attribute.String("handler", "root"),
-		attribute.String("method", r.Method),
+		attribute.String("method", "SayHello"),
+		attribute.String("name", req.Name),
 	)
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Hello!"))
+	message := fmt.Sprintf("Hello, %s!", req.Name)
+	return &pb.HelloResponse{Message: message}, nil
 }
 
 func main() {
-
 	cfg := config.LoadConfig()
-	logger := logger.NewZerologAdapter(cfg.Logging.Format, cfg.Logging.Level)
+	logAdapter := logger.NewZerologAdapter(cfg.Logging.Format, cfg.Logging.Level)
 
 	telemetryShutdown := telemetry.InitTracer(cfg.ServiceName, cfg.OTEL.Endpoint)
 	defer telemetryShutdown()
 
-	http.Handle("/", otelhttp.NewHandler(http.HandlerFunc(rootHandler), "RootHandler"))
+	listener, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		logAdapter.Fatal("failed to listen", err)
+	}
 
-	logger.DebugF("service name: %s", cfg.ServiceName)
+	s := grpc.NewServer(
+		grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
+	)
+	pb.RegisterGreeterServer(s, &server{})
 
-	logger.Info("Server listening on http://localhost:8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		logger.Fatal("Server error", err)
+	logAdapter.Info("gRPC server listening on port 50051")
+	if err := s.Serve(listener); err != nil {
+		logAdapter.Fatal("failed to serve", err)
 	}
 }
