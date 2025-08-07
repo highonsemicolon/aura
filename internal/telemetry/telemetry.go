@@ -20,6 +20,7 @@ func InitTracer(serviceName, endpoint string) func() {
 	exp, err := otlptracehttp.New(
 		context.Background(),
 		otlptracehttp.WithEndpoint(endpoint),
+		otlptracehttp.WithInsecure(),
 	)
 	if err != nil {
 		logger.Fatal("Failed to create trace exporter", err)
