@@ -1,7 +1,11 @@
 package server
 
 import (
+	"context"
 	"net"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/highonsemicolon/aura/internal/config"
 	"github.com/highonsemicolon/aura/internal/handler"
@@ -12,10 +16,10 @@ import (
 	"github.com/highonsemicolon/aura/internal/logger"
 )
 
-func StartGRPCServer(cfg *config.Config, logAdapter logger.Logger) {
+func StartGRPCServer(ctx context.Context, cfg *config.Config, logger logger.Logger) {
 	listener, err := net.Listen("tcp", ":50051")
 	if err != nil {
-		logAdapter.Fatal("failed to listen", err)
+		logger.Fatal("failed to listen", err)
 	}
 
 	s := grpc.NewServer(
@@ -23,8 +27,23 @@ func StartGRPCServer(cfg *config.Config, logAdapter logger.Logger) {
 	)
 	pb.RegisterGreeterServer(s, handler.NewGreeterHandler())
 
-	logAdapter.Info("gRPC server listening on port 50051")
-	if err := s.Serve(listener); err != nil {
-		logAdapter.Fatal("failed to serve", err)
+	go func() {
+		logger.Info("gRPC server listening on port 50051")
+		if err := s.Serve(listener); err != nil {
+			logger.Fatal("failed to serve", err)
+		}
+	}()
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+
+	select {
+	case <-ctx.Done():
+		logger.Info("context cancelled, shutting down")
+	case sig := <-stop:
+		logger.InfoF("received signal: %s, shutting down", sig)
 	}
+
+	s.GracefulStop()
+	logger.Info("gRPC server stopped gracefully")
 }
