@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	pb "github.com/highonsemicolon/aura/internal/proto/greeter"
+	pb "github.com/highonsemicolon/aura/gen/greeter"
 	"github.com/highonsemicolon/aura/internal/telemetry"
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"

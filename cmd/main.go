@@ -7,8 +7,8 @@ import (
 
 	"github.com/highonsemicolon/aura/internal/config"
 	"github.com/highonsemicolon/aura/internal/logger"
-	pb "github.com/highonsemicolon/aura/internal/proto/greeter"
 	"github.com/highonsemicolon/aura/internal/telemetry"
+	pb "github.com/highonsemicolon/aura/gen/greeter"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
