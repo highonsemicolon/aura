@@ -11,7 +11,7 @@ BUILD_TIME := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 BUILD_HOST := $(shell hostname)
 MODULE := $(shell go list -m)
 LDFLAGS := 
-		   
+
 tidy:
 	@go mod tidy
 
@@ -30,7 +30,7 @@ run-hot:
 	air \
 	--build.pre_cmd="make tidy" \
 	--build.cmd="make build" \
-	--build.bin="./tmp/main" \
+	--build.bin="$(BINARY_NAME)" \
 	--build.send_interrupt=true \
 	--build.kill_delay=2s
 
