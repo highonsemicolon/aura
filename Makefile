@@ -20,11 +20,11 @@ fmt:
 	go fmt ./...
 
 build:
-	@if [ ! -f cmd/main.go ]; then echo "Error: cmd/main.go not found!"; exit 1; fi
-	@go build $(GO_FLAGS)  -ldflags "$(LDFLAGS)" -o $(BINARY_NAME) ./cmd
+	@if [ ! -f cmd/app/main.go ]; then echo "Error: cmd/app/main.go not found!"; exit 1; fi
+	@go build $(GO_FLAGS)  -ldflags "$(LDFLAGS)" -o $(BINARY_NAME) ./cmd/app
 	
 run:
-	@go run -ldflags "$(LDFLAGS)" ./cmd
+	@go run -ldflags "$(LDFLAGS)" ./cmd/app
 
 run-hot:
 	air \
