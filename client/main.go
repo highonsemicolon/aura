@@ -38,7 +38,10 @@ func initTracer(serviceName, endpoint string) (func(), error) {
 	)
 
 	otel.SetTracerProvider(tp)
-	otel.SetTextMapPropagator(propagation.TraceContext{})
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{},
+		propagation.Baggage{},
+	))
 
 	return func() {
 		_ = tp.Shutdown(ctx)
@@ -67,6 +70,10 @@ func main() {
 
 	ctx, span := tracer.Start(context.Background(), "call-traced-server")
 	defer span.End()
+
+	span.SetAttributes(
+		attribute.String("client", "my-http-client"),
+	)
 
 	// Make the request to the server service
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "http://localhost:8080/", nil)

@@ -37,7 +37,10 @@ func InitTracer(serviceName, endpoint string) func() {
 
 	tracerProvider = tp
 	otel.SetTracerProvider(tp)
-	otel.SetTextMapPropagator(propagation.TraceContext{})
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{},
+		propagation.Baggage{},
+	))
 
 	logger.Info("OpenTelemetry tracer initialized")
 
