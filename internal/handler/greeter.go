@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+	"time"
 
 	pb "github.com/highonsemicolon/aura/gen/greeter"
 	"go.opentelemetry.io/otel"
@@ -21,6 +22,8 @@ func (s *GreeterHandler) SayHello(ctx context.Context, req *pb.HelloRequest) (*p
 	tracer := otel.Tracer("github.com/highonsemicolon/aura/cmd/grpc")
 	_, span := tracer.Start(ctx, "SayHello")
 	defer span.End()
+
+	time.Sleep(5000 * time.Millisecond)
 
 	span.SetAttributes(
 		attribute.String("method", "SayHello"),

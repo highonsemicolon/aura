@@ -15,8 +15,10 @@ func main() {
 	cfg := config.LoadConfig()
 	logAdapter := logger.NewZerologAdapter(cfg.Logging.Format, cfg.Logging.Level)
 
-	telemetryShutdown := telemetry.InitTracer(cfg.ServiceName, cfg.OTEL.Endpoint)
-	defer telemetryShutdown()
+	shutdownTelemetry := telemetry.InitTracer(ctx, cfg.ServiceName, cfg.OTEL.Endpoint)
+	defer func() {
+		_ = shutdownTelemetry(ctx)
+	}()
 
 	server.StartGRPCServer(ctx, cfg, logAdapter)
 }

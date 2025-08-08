@@ -22,13 +22,16 @@ func main() {
 	if endpoint == "" {
 		endpoint = "localhost:4318"
 	}
+	ctx := context.Background()
 
-	telemetryShutdown := telemetry.InitTracer("grpc-client-service", endpoint)
-	defer telemetryShutdown()
+	shutdownTelemetry := telemetry.InitTracer(ctx, "grpc-client-service", endpoint)
+	defer func() {
+		_ = shutdownTelemetry(ctx)
+	}()
 
 	tracer := otel.Tracer("grpc-client")
 
-	ctx, span := tracer.Start(context.Background(), "call-grpc-server")
+	ctx, span := tracer.Start(ctx, "call-grpc-server")
 	defer span.End()
 
 	span.SetAttributes(

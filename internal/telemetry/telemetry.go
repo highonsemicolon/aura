@@ -2,6 +2,7 @@ package telemetry
 
 import (
 	"context"
+	"time"
 
 	"github.com/highonsemicolon/aura/internal/logger"
 	"go.opentelemetry.io/otel"
@@ -15,11 +16,11 @@ import (
 
 var tracerProvider *sdktrace.TracerProvider
 
-func InitTracer(serviceName, endpoint string) func() {
+func InitTracer(ctx context.Context, serviceName, endpoint string) func(context.Context) error {
 	logger := logger.NewZerologAdapter("json", "info")
 
-	exp, err := otlptracehttp.New(
-		context.Background(),
+	exporter, err := otlptracehttp.New(
+		ctx,
 		otlptracehttp.WithEndpoint(endpoint),
 		otlptracehttp.WithInsecure(),
 	)
@@ -28,7 +29,7 @@ func InitTracer(serviceName, endpoint string) func() {
 	}
 
 	tp := sdktrace.NewTracerProvider(
-		sdktrace.WithBatcher(exp),
+		sdktrace.WithBatcher(exporter),
 		sdktrace.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
 			semconv.ServiceName(serviceName),
@@ -44,10 +45,13 @@ func InitTracer(serviceName, endpoint string) func() {
 
 	logger.Info("OpenTelemetry tracer initialized")
 
-	return func() {
-		if err := tp.Shutdown(context.Background()); err != nil {
-			logger.Error("Error shutting down tracer provider", err)
+	return func(ctx context.Context) error {
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+		if err := tp.Shutdown(ctx); err != nil {
+			return err
 		}
+		return exporter.Shutdown(ctx)
 	}
 }
 
