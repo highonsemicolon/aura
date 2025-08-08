@@ -1,11 +1,16 @@
 package logger
 
 import (
+	"context"
 	"io"
 	"os"
 	"strings"
 
 	"github.com/rs/zerolog"
+	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type zerologAdapter struct {
@@ -37,6 +42,43 @@ func NewZerologAdapter(format, level string) Logger {
 
 	return &zerologAdapter{
 		logger: &logger,
+	}
+}
+
+func UnaryServerZerologInterceptor(log Logger) grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
+		span := trace.SpanFromContext(ctx)
+		sc := span.SpanContext()
+
+		logger := log.WithFields(map[string]any{
+			"method":   info.FullMethod,
+			"trace_id": sc.TraceID().String(),
+			"span_id":  sc.SpanID().String(),
+		})
+		logger.Info("gRPC request started")
+
+		resp, err = handler(ctx, req)
+
+		if err != nil {
+			st := status.Convert(err)
+			if st.Code() == codes.OK {
+				log.InfoF("gRPC handler finished | method=%s", info.FullMethod)
+				logger.WithFields(map[string]any{
+					"status": st.Code(),
+				}).Info("gRPC handler finished")
+			} else {
+				logger.WithFields(map[string]any{
+					"status": st.Code(),
+					"error":  st.Message(),
+				}).Error("gRPC handler finished with error")
+			}
+		} else {
+			logger.WithFields(map[string]any{
+				"status": codes.OK,
+			}).Info("gRPC handler finished successfully")
+		}
+
+		return resp, err
 	}
 }
 

@@ -16,21 +16,25 @@ import (
 	"github.com/highonsemicolon/aura/internal/logger"
 )
 
-func StartGRPCServer(ctx context.Context, cfg *config.Config, logger logger.Logger) {
+func StartGRPCServer(ctx context.Context, cfg *config.Config, log logger.Logger) {
 	listener, err := net.Listen("tcp", ":50051")
 	if err != nil {
-		logger.Fatal("failed to listen", err)
+		log.Fatal("failed to listen", err)
 	}
 
 	s := grpc.NewServer(
-		grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
+		grpc.ChainUnaryInterceptor(
+			otelgrpc.UnaryServerInterceptor(),
+			logger.UnaryServerZerologInterceptor(log),
+		),
 	)
+
 	pb.RegisterGreeterServer(s, handler.NewGreeterHandler())
 
 	go func() {
-		logger.Info("gRPC server listening on port 50051")
+		log.Info("gRPC server listening on port 50051")
 		if err := s.Serve(listener); err != nil {
-			logger.Fatal("failed to serve", err)
+			log.Fatal("failed to serve", err)
 		}
 	}()
 
@@ -39,11 +43,11 @@ func StartGRPCServer(ctx context.Context, cfg *config.Config, logger logger.Logg
 
 	select {
 	case <-ctx.Done():
-		logger.Info("context cancelled, shutting down")
+		log.Info("context cancelled, shutting down")
 	case sig := <-stop:
-		logger.InfoF("received signal: %s, shutting down", sig)
+		log.InfoF("received signal: %s, shutting down", sig)
 	}
 
 	s.GracefulStop()
-	logger.Info("gRPC server stopped gracefully")
+	log.Info("gRPC server stopped gracefully")
 }
