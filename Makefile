@@ -40,3 +40,6 @@ proto: $(wildcard proto/*.proto)
     --go-grpc_out=gen/ \
     proto/*.proto
 	@echo "Protobuf files generated in gen/ directory."
+
+client:
+	go run -ldflags "$(LDFLAGS)" ./cmd/client
