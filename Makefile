@@ -34,10 +34,9 @@ run-hot:
 	--build.send_interrupt=true \
 	--build.kill_delay=2s
 
-proto:
+proto: $(wildcard proto/*.proto)
 	protoc \
-	--go_out=../internal/proto \
-	--go-grpc_out=../internal/proto \
-	--go_opt=Mgreeter.proto=/greeter \
-	--go-grpc_opt=Mgreeter.proto=/greeter \
-	greeter.proto
+    --go_out=gen/ \
+    --go-grpc_out=gen/ \
+    proto/*.proto
+	@echo "Protobuf files generated in gen/ directory."
