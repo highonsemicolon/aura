@@ -4,7 +4,7 @@ BINARY_NAME ?= tmp/main
 GO_VERSION ?= 1.24.5
 GO_FLAGS ?= -v
 
-APP_NAME := Aura
+APP_NAME := aura
 VERSION := 0.1
 COMMIT_HASH := $(shell git rev-parse HEAD)
 BUILD_TIME := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
@@ -43,3 +43,15 @@ proto: $(wildcard proto/*.proto)
 
 client:
 	go run -ldflags "$(LDFLAGS)" ./cmd/client
+
+setup-helm:
+	@echo "Setting up Helm..."
+	@helm repo add highonsemicolon https://highonsemicolon.github.io/charts
+	@helm repo update
+
+deploy:
+	helm upgrade --install \
+		$(APP_NAME) \
+		highonsemicolon/pathfinder \
+		--set image.tag=$(VERSION) \
+		-f helm/values.yaml

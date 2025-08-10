@@ -1,0 +1,10 @@
+nameOverride: "aura"
+fullnameOverride: "aura"
+
+image:
+  repository: aura
+  tag: latest
+
+env:
+  secret:
+  configMap:
