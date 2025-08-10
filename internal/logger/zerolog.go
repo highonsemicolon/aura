@@ -45,41 +45,50 @@ func NewZerologAdapter(format, level string) Logger {
 	}
 }
 
-func UnaryServerZerologInterceptor(log Logger) grpc.UnaryServerInterceptor {
+func UnaryServerZerologInterceptor(base Logger) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
 		span := trace.SpanFromContext(ctx)
 		sc := span.SpanContext()
 
-		logger := log.WithFields(map[string]any{
+		log := base.WithFields(map[string]any{
 			"method":   info.FullMethod,
 			"trace_id": sc.TraceID().String(),
 			"span_id":  sc.SpanID().String(),
 		})
-		logger.Info("gRPC request started")
+
+		log.Info("gRPC request started")
+
+		ctx = contextWithLogger(ctx, log)
 
 		resp, err = handler(ctx, req)
 
 		if err != nil {
 			st := status.Convert(err)
-			if st.Code() == codes.OK {
-				log.InfoF("gRPC handler finished | method=%s", info.FullMethod)
-				logger.WithFields(map[string]any{
-					"status": st.Code(),
-				}).Info("gRPC handler finished")
-			} else {
-				logger.WithFields(map[string]any{
-					"status": st.Code(),
-					"error":  st.Message(),
-				}).Error("gRPC handler finished with error")
-			}
+			log.WithFields(map[string]any{
+				"status": st.Code(),
+				"error":  st.Message(),
+			}).Error("gRPC handler finished with error")
 		} else {
-			logger.WithFields(map[string]any{
+			log.WithFields(map[string]any{
 				"status": codes.OK,
 			}).Info("gRPC handler finished successfully")
 		}
 
 		return resp, err
 	}
+}
+
+type loggerContextKey struct{}
+
+func contextWithLogger(ctx context.Context, log Logger) context.Context {
+	return context.WithValue(ctx, loggerContextKey{}, log)
+}
+
+func FromContext(ctx context.Context) Logger {
+	if l, ok := ctx.Value(loggerContextKey{}).(Logger); ok {
+		return l
+	}
+	return nil
 }
 
 func (z *zerologAdapter) Debug(msg string) {
