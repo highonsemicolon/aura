@@ -7,9 +7,10 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog"
+	otelCodes "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
+	grpcCodes "google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
@@ -47,31 +48,23 @@ func NewZerologAdapter(format, level string) Logger {
 
 func UnaryServerZerologInterceptor(base Logger) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
-		span := trace.SpanFromContext(ctx)
-		sc := span.SpanContext()
-
-		log := base.WithFields(map[string]any{
-			"method":   info.FullMethod,
-			"trace_id": sc.TraceID().String(),
-			"span_id":  sc.SpanID().String(),
-		})
-
-		log.Info("gRPC request started")
+		log := base.WithField("method", info.FullMethod)
 
 		ctx = contextWithLogger(ctx, log)
+		span := trace.SpanFromContext(ctx)
 
 		resp, err = handler(ctx, req)
 
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(otelCodes.Error, err.Error())
 			st := status.Convert(err)
-			log.WithFields(map[string]any{
-				"status": st.Code(),
-				"error":  st.Message(),
-			}).Error("gRPC handler finished with error")
+			log.WithField("status", st.Code()).
+				WithField("error", st.Message()).
+				ErrorCtx(ctx, "request failed")
 		} else {
-			log.WithFields(map[string]any{
-				"status": codes.OK,
-			}).Info("gRPC handler finished successfully")
+			log.WithField("status", grpcCodes.OK).
+				InfoCtx(ctx, "request completed")
 		}
 
 		return resp, err
@@ -80,15 +73,17 @@ func UnaryServerZerologInterceptor(base Logger) grpc.UnaryServerInterceptor {
 
 type loggerContextKey struct{}
 
+var defaultLogger Logger = NewZerologAdapter("console", "info")
+
 func contextWithLogger(ctx context.Context, log Logger) context.Context {
 	return context.WithValue(ctx, loggerContextKey{}, log)
 }
 
 func FromContext(ctx context.Context) Logger {
 	if l, ok := ctx.Value(loggerContextKey{}).(Logger); ok {
-		return l
+		return wrapWithTrace(ctx, l)
 	}
-	return nil
+	return wrapWithTrace(ctx, defaultLogger)
 }
 
 func (z *zerologAdapter) Debug(msg string) {
@@ -153,4 +148,89 @@ func (z *zerologAdapter) WithFields(fields map[string]any) Logger {
 	}
 	newLogger := ctx.Logger()
 	return &zerologAdapter{logger: &newLogger}
+}
+
+func (z *zerologAdapter) withTrace(ctx context.Context) *zerolog.Logger {
+	span := trace.SpanFromContext(ctx)
+	if !span.SpanContext().IsValid() {
+		return z.logger
+	}
+	l := z.logger.With().
+		Str("trace_id", span.SpanContext().TraceID().String()).
+		Str("span_id", span.SpanContext().SpanID().String()).
+		Logger()
+	return &l
+}
+
+func wrapWithTrace(ctx context.Context, l Logger) Logger {
+	span := trace.SpanFromContext(ctx)
+	if !span.SpanContext().IsValid() {
+		return l
+	}
+	return l.WithFields(map[string]any{
+		"trace_id": span.SpanContext().TraceID().String(),
+		"span_id":  span.SpanContext().SpanID().String(),
+	})
+}
+func (z *zerologAdapter) DebugCtx(ctx context.Context, msg string) {
+	z.withTrace(ctx).Debug().Msg(msg)
+}
+
+func (z *zerologAdapter) InfoCtx(ctx context.Context, msg string) {
+	z.withTrace(ctx).Info().Msg(msg)
+}
+
+func (z *zerologAdapter) WarnCtx(ctx context.Context, msg string, errs ...error) {
+	ev := z.withTrace(ctx).Warn()
+	if len(errs) > 0 {
+		ev = ev.Errs("errors", errs)
+	}
+	ev.Msg(msg)
+}
+func (z *zerologAdapter) ErrorCtx(ctx context.Context, msg string, errs ...error) {
+	ev := z.withTrace(ctx).Error()
+	if len(errs) > 0 {
+		ev = ev.Errs("errors", errs)
+	}
+	ev.Msg(msg)
+}
+
+func (z *zerologAdapter) FatalCtx(ctx context.Context, msg string, errs ...error) {
+	ev := z.withTrace(ctx).Fatal()
+	if len(errs) > 0 {
+		ev = ev.Errs("errors", errs)
+	}
+	ev.Msg(msg)
+	os.Exit(1)
+}
+
+func (z *zerologAdapter) DebugFCtx(ctx context.Context, format string, args ...any) {
+	z.withTrace(ctx).Debug().Msgf(format, args...)
+}
+func (z *zerologAdapter) InfoFCtx(ctx context.Context, format string, args ...any) {
+	z.withTrace(ctx).Info().Msgf(format, args...)
+}
+
+func (z *zerologAdapter) WarnFCtx(ctx context.Context, format string, args ...any) {
+	ev := z.withTrace(ctx).Warn()
+	if len(args) > 0 {
+		ev.Msgf(format, args...)
+	} else {
+		ev.Msg(format)
+	}
+	ev.Send()
+}
+func (z *zerologAdapter) ErrorFCtx(ctx context.Context, format string, args ...any) {
+	z.withTrace(ctx).Error().Msgf(format, args...)
+}
+
+func (z *zerologAdapter) FatalFCtx(ctx context.Context, format string, args ...any) {
+	ev := z.withTrace(ctx).Fatal()
+	if len(args) > 0 {
+		ev.Msgf(format, args...)
+	} else {
+		ev.Msg(format)
+	}
+	ev.Send()
+	os.Exit(1)
 }
