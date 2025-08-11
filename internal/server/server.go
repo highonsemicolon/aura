@@ -24,9 +24,9 @@ func StartGRPCServer(ctx context.Context, cfg *config.Config, log logger.Logger)
 
 	s := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
-			otelgrpc.UnaryServerInterceptor(),
 			logger.UnaryServerZerologInterceptor(log),
 		),
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 	)
 
 	pb.RegisterGreeterServer(s, handler.NewGreeterHandler())

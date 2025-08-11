@@ -10,7 +10,6 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 
 	"google.golang.org/grpc"
@@ -29,7 +28,7 @@ func main() {
 		_ = shutdownTelemetry(ctx)
 	}()
 
-	tracer := otel.Tracer("grpc-client")
+	tracer := telemetry.Tracer("grpc-client")
 
 	ctx, span := tracer.Start(ctx, "call-grpc-server")
 	defer span.End()
@@ -41,7 +40,7 @@ func main() {
 	conn, err := grpc.NewClient(
 		"localhost:50051",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 	)
 	if err != nil {
 		span.RecordError(err)
