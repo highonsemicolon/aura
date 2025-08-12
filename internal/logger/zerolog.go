@@ -86,12 +86,12 @@ func FromContext(ctx context.Context) Logger {
 	return wrapWithTrace(ctx, defaultLogger)
 }
 
-func (z *zerologAdapter) Debug(msg string) {
-	z.logger.Debug().Msg(msg)
+func (z *zerologAdapter) Debug(msg ...string) {
+	z.logger.Debug().Msg(strings.Join(msg, " "))
 }
 
-func (z *zerologAdapter) Info(msg string) {
-	z.logger.Info().Msg(msg)
+func (z *zerologAdapter) Info(msg ...string) {
+	z.logger.Info().Msg(strings.Join(msg, " "))
 }
 
 func (z *zerologAdapter) Warn(msg string, errs ...error) {

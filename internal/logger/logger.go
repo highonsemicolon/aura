@@ -3,8 +3,8 @@ package logger
 import "context"
 
 type Logger interface {
-	Debug(msg string)
-	Info(msg string)
+	Debug(msg ...string)
+	Info(msg ...string)
 	Warn(msg string, errs ...error)
 	Error(msg string, errs ...error)
 	Fatal(msg string, errs ...error)
