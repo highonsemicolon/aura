@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	pb "github.com/highonsemicolon/aura/gen/greeter"
+	"github.com/highonsemicolon/aura/internal/logger"
 	"github.com/highonsemicolon/aura/internal/telemetry"
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -33,6 +33,8 @@ func main() {
 	ctx, span := tracer.Start(ctx, "call-grpc-server")
 	defer span.End()
 
+	log := logger.FromContext(ctx)
+
 	span.SetAttributes(
 		attribute.String("client", "my-grpc-client"),
 	)
@@ -45,7 +47,7 @@ func main() {
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("connection_error", err.Error()))
-		fmt.Println("Failed to connect:", err)
+		log.Error("failed to connect:", err)
 		return
 	}
 	defer conn.Close()
@@ -56,9 +58,9 @@ func main() {
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("grpc_error", err.Error()))
-		fmt.Println("gRPC request failed:", err)
+		log.Error("gRPC request failed:", err)
 		return
 	}
 
-	fmt.Println("Response:", resp.Message)
+	log.Info("gRPC response received:", resp.Message)
 }
