@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator"
-	"github.com/highonsemicolon/aura/internal/logger"
+	"github.com/highonsemicolon/aura/internal/logging"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/providers/env"
 
@@ -30,7 +30,7 @@ type OTEL struct {
 var k = koanf.New(".")
 
 func LoadConfig() *Config {
-	logger := logger.NewZerologAdapter("json", "info")
+	logger := logging.NewZerologAdapter("json", "info")
 
 	err := k.Load(env.Provider("TEMPLATE_", ".", func(s string) string {
 		return strings.ToLower(strings.TrimPrefix(s, "TEMPLATE_"))

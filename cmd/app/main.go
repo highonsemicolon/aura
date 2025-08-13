@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/highonsemicolon/aura/internal/config"
-	"github.com/highonsemicolon/aura/internal/logger"
+	"github.com/highonsemicolon/aura/internal/logging"
 	"github.com/highonsemicolon/aura/internal/server"
 	"github.com/highonsemicolon/aura/internal/telemetry"
 )
@@ -13,7 +13,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	cfg := config.LoadConfig()
-	logAdapter := logger.NewZerologAdapter(cfg.Logging.Format, cfg.Logging.Level)
+	logAdapter := logging.NewZerologAdapter(cfg.Logging.Format, cfg.Logging.Level)
 
 	shutdownTelemetry := telemetry.InitTracer(ctx, cfg.ServiceName, cfg.OTEL.Endpoint)
 	defer func() {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/highonsemicolon/aura/internal/logger"
+	"github.com/highonsemicolon/aura/internal/logging"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
@@ -17,7 +17,7 @@ import (
 var tracerProvider *sdktrace.TracerProvider
 
 func InitTracer(ctx context.Context, serviceName, endpoint string) func(context.Context) error {
-	logger := logger.NewZerologAdapter("json", "info")
+	logger := logging.NewZerologAdapter("json", "info")
 
 	exporter, err := otlptracehttp.New(
 		ctx,

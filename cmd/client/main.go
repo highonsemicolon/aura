@@ -5,7 +5,7 @@ import (
 	"os"
 
 	pb "github.com/highonsemicolon/aura/gen/greeter"
-	"github.com/highonsemicolon/aura/internal/logger"
+	"github.com/highonsemicolon/aura/internal/logging"
 	"github.com/highonsemicolon/aura/internal/telemetry"
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -33,7 +33,7 @@ func main() {
 	ctx, span := tracer.Start(ctx, "call-grpc-server")
 	defer span.End()
 
-	log := logger.FromContext(ctx)
+	log := logging.FromContext(ctx)
 
 	span.SetAttributes(
 		attribute.String("client", "my-grpc-client"),

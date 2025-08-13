@@ -6,7 +6,7 @@ import (
 	"time"
 
 	pb "github.com/highonsemicolon/aura/gen/greeter"
-	"github.com/highonsemicolon/aura/internal/logger"
+	"github.com/highonsemicolon/aura/internal/logging"
 	"github.com/highonsemicolon/aura/internal/telemetry"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -20,7 +20,7 @@ func NewGreeterHandler() *GreeterHandler {
 }
 
 func (s *GreeterHandler) SayHello(ctx context.Context, req *pb.HelloRequest) (*pb.HelloResponse, error) {
-	log := logger.FromContext(ctx)
+	log := logging.FromContext(ctx)
 
 	tracer := telemetry.Tracer("github.com/highonsemicolon/aura/cmd/grpc")
 	_, span := tracer.Start(ctx, "SayHello")

@@ -13,10 +13,10 @@ import (
 	"google.golang.org/grpc"
 
 	pb "github.com/highonsemicolon/aura/gen/greeter"
-	"github.com/highonsemicolon/aura/internal/logger"
+	"github.com/highonsemicolon/aura/internal/logging"
 )
 
-func StartGRPCServer(ctx context.Context, cfg *config.Config, log logger.Logger) {
+func StartGRPCServer(ctx context.Context, cfg *config.Config, log logging.Logger) {
 	listener, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatal("failed to listen", err)
@@ -24,7 +24,7 @@ func StartGRPCServer(ctx context.Context, cfg *config.Config, log logger.Logger)
 
 	s := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
-			logger.UnaryServerZerologInterceptor(log),
+			logging.UnaryServerZerologInterceptor(log),
 		),
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 	)
