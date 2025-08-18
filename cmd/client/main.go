@@ -5,8 +5,8 @@ import (
 	"os"
 
 	pb "github.com/highonsemicolon/aura/gen/greeter"
-	"github.com/highonsemicolon/aura/internal/logging"
-	"github.com/highonsemicolon/aura/internal/telemetry"
+	"github.com/highonsemicolon/aura/pkg/logging"
+	"github.com/highonsemicolon/aura/pkg/telemetry"
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 

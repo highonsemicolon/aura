@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc"
 
 	pb "github.com/highonsemicolon/aura/gen/greeter"
-	"github.com/highonsemicolon/aura/internal/logging"
+	"github.com/highonsemicolon/aura/pkg/logging"
 )
 
 func StartGRPCServer(ctx context.Context, cfg *config.Config, log logging.Logger) {

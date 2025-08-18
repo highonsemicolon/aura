@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator"
-	"github.com/highonsemicolon/aura/internal/logging"
+	"github.com/highonsemicolon/aura/pkg/logging"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/providers/env"
 

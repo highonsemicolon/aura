@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/highonsemicolon/aura/internal/config"
-	"github.com/highonsemicolon/aura/internal/logging"
+	"github.com/highonsemicolon/aura/pkg/logging"
 	"github.com/highonsemicolon/aura/internal/server"
-	"github.com/highonsemicolon/aura/internal/telemetry"
+	"github.com/highonsemicolon/aura/pkg/telemetry"
 )
 
 func main() {

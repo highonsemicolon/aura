@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/highonsemicolon/aura/internal/logging"
+	"github.com/highonsemicolon/aura/pkg/logging"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
