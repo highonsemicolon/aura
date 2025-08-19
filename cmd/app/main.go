@@ -5,9 +5,11 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/highonsemicolon/aura/internal/config"
 	"github.com/highonsemicolon/aura/internal/server"
+	"github.com/highonsemicolon/aura/pkg/healthz"
 	"github.com/highonsemicolon/aura/pkg/logging"
 	"github.com/highonsemicolon/aura/pkg/telemetry"
 )
@@ -34,8 +36,23 @@ func main() {
 		}
 	}()
 
-	if err := server.StartGRPCServer(ctx, cfg, logAdapter); err != nil {
+	healthz := healthz.NewHealthz(5 * time.Second)
+	healthz.RegisterLiveness("liveness")
+	healthz.RegisterReadiness("greeter", checkDBConnection())
+	healthz.RegisterReadiness("thanker")
+	healthz.Start(ctx)
+	defer healthz.Stop()
+
+	if err := server.StartGRPCServer(ctx, cfg, healthz, logAdapter); err != nil {
 		logAdapter.Error("gRPC server failed", err)
 		os.Exit(1)
+	}
+}
+
+func checkDBConnection() healthz.Checker {
+	return func(ctx context.Context) bool {
+		_, cancel := context.WithTimeout(ctx, 1*time.Second)
+		defer cancel()
+		return true
 	}
 }

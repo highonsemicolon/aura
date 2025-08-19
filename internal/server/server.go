@@ -7,16 +7,16 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
 	pb "github.com/highonsemicolon/aura/gen/greeter"
 	"github.com/highonsemicolon/aura/internal/config"
 	"github.com/highonsemicolon/aura/internal/handler"
+	"github.com/highonsemicolon/aura/pkg/healthz"
 	"github.com/highonsemicolon/aura/pkg/logging"
 )
 
-func StartGRPCServer(ctx context.Context, cfg *config.Config, log logging.Logger) error {
+func StartGRPCServer(ctx context.Context, cfg *config.Config, healthz *healthz.Healthz, log logging.Logger) error {
 	listener, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		return fmt.Errorf("failed to listen: %w", err)
@@ -31,10 +31,7 @@ func StartGRPCServer(ctx context.Context, cfg *config.Config, log logging.Logger
 
 	pb.RegisterGreeterServer(s, handler.NewGreeterHandler())
 
-	healthServer := health.NewServer()
-	grpc_health_v1.RegisterHealthServer(s, healthServer)
-	healthServer.SetServingStatus("greeter", grpc_health_v1.HealthCheckResponse_SERVING)
-	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
+	grpc_health_v1.RegisterHealthServer(s, healthz.Server())
 
 	errCh := make(chan error, 1)
 	go func() {
@@ -47,9 +44,6 @@ func StartGRPCServer(ctx context.Context, cfg *config.Config, log logging.Logger
 	select {
 	case <-ctx.Done():
 		log.Info("context cancelled, shutting down gRPC server")
-		healthServer.SetServingStatus("greeter", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
-		healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
-
 		s.GracefulStop()
 	case serveErr := <-errCh:
 		return fmt.Errorf("gRPC server error: %w", serveErr)
