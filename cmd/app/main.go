@@ -2,23 +2,40 @@ package main
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/highonsemicolon/aura/internal/config"
-	"github.com/highonsemicolon/aura/pkg/logging"
 	"github.com/highonsemicolon/aura/internal/server"
+	"github.com/highonsemicolon/aura/pkg/logging"
 	"github.com/highonsemicolon/aura/pkg/telemetry"
 )
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-sigCh
+		cancel()
+	}()
+
 	cfg := config.LoadConfig()
+
 	logAdapter := logging.NewZerologAdapter(cfg.Logging.Format, cfg.Logging.Level)
 
 	shutdownTelemetry := telemetry.InitTracer(ctx, cfg.ServiceName, cfg.OTEL.Endpoint)
 	defer func() {
-		_ = shutdownTelemetry(ctx)
+		if err := shutdownTelemetry(ctx); err != nil {
+			logAdapter.Error("failed to shutdown telemetry", err)
+		}
 	}()
 
-	server.StartGRPCServer(ctx, cfg, logAdapter)
+	if err := server.StartGRPCServer(ctx, cfg, logAdapter); err != nil {
+		logAdapter.Error("gRPC server failed", err)
+		os.Exit(1)
+	}
 }
