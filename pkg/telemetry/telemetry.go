@@ -2,9 +2,9 @@ package telemetry
 
 import (
 	"context"
+	"log"
 	"time"
 
-	"github.com/highonsemicolon/aura/pkg/logging"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
@@ -17,7 +17,6 @@ import (
 var tracerProvider *sdktrace.TracerProvider
 
 func InitTracer(ctx context.Context, serviceName, endpoint string) func(context.Context) error {
-	logger := logging.NewZerologAdapter("json", "info")
 
 	exporter, err := otlptracehttp.New(
 		ctx,
@@ -25,7 +24,7 @@ func InitTracer(ctx context.Context, serviceName, endpoint string) func(context.
 		otlptracehttp.WithInsecure(),
 	)
 	if err != nil {
-		logger.Fatal("Failed to create trace exporter", err)
+		log.Fatal("Failed to create trace exporter", err)
 	}
 
 	tp := sdktrace.NewTracerProvider(
@@ -43,7 +42,7 @@ func InitTracer(ctx context.Context, serviceName, endpoint string) func(context.
 		propagation.Baggage{},
 	))
 
-	logger.Info("OpenTelemetry tracer initialized")
+	log.Println("OpenTelemetry tracer initialized")
 
 	return func(ctx context.Context) error {
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
