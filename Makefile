@@ -12,6 +12,10 @@ BUILD_HOST := $(shell hostname)
 MODULE := $(shell go list -m)
 LDFLAGS := 
 
+print-go-version:
+	@echo $(GO_VERSION)
+
+
 tidy:
 	@go mod tidy
 
@@ -22,6 +26,9 @@ fmt:
 build:
 	@if [ ! -f cmd/app/main.go ]; then echo "Error: cmd/app/main.go not found!"; exit 1; fi
 	@go build $(GO_FLAGS)  -ldflags "$(LDFLAGS)" -o $(BINARY_NAME) ./cmd/app
+
+test:
+	@go test -v ./...
 	
 run:
 	@go run -ldflags "$(LDFLAGS)" ./cmd/app
