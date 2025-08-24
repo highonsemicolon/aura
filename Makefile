@@ -24,14 +24,14 @@ fmt:
 	go fmt ./...
 
 build:
-	@if [ ! -f cmd/app/main.go ]; then echo "Error: cmd/app/main.go not found!"; exit 1; fi
-	@go build $(GO_FLAGS)  -ldflags "$(LDFLAGS)" -o $(BINARY_NAME) ./cmd/app
+	@if [ ! -f services/app/main.go ]; then echo "Error: services/app/main.go not found!"; exit 1; fi
+	@go build $(GO_FLAGS)  -ldflags "$(LDFLAGS)" -o $(BINARY_NAME) ./services/app
 
 test:
 	@go test -v ./...
 	
 run:
-	@go run -ldflags "$(LDFLAGS)" ./cmd/app
+	@go run -ldflags "$(LDFLAGS)" ./services/app
 
 run-hot:
 	air \
@@ -41,15 +41,21 @@ run-hot:
 	--build.send_interrupt=true \
 	--build.kill_delay=2s
 
-proto: $(wildcard proto/*.proto)
-	protoc \
-    --go_out=gen/ \
-    --go-grpc_out=gen/ \
-    proto/*.proto
-	@echo "Protobuf files generated in gen/ directory."
+PROTO_FILES := $(wildcard apis/*/proto/*.proto)
+
+proto:
+	@for file in $(PROTO_FILES); do \
+		service_dir=$$(dirname $$file | sed 's|/proto$$||'); \
+		mkdir -p $$service_dir/gen; \
+		protoc -I $$service_dir/proto \
+			--go_out=$$service_dir/gen --go_opt=paths=source_relative \
+			--go-grpc_out=$$service_dir/gen --go-grpc_opt=paths=source_relative \
+			$$file; \
+	done
+	@echo "Protobuf files generated in apis/*/gen directories."
 
 client:
-	go run -ldflags "$(LDFLAGS)" ./cmd/client
+	go run -ldflags "$(LDFLAGS)" ./services/client
 
 setup-helm:
 	@echo "Setting up Helm..."

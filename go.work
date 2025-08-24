@@ -1,0 +1,10 @@
+go 1.24.5
+
+use (
+	./apis/greeter
+	./pkg/healthz
+	./pkg/logging
+	./pkg/telemetry
+	./services/app
+	./services/client
+)
