@@ -90,7 +90,7 @@ jobs:
       - name: Check protobuf is up to date
         run: |
           make proto
-          git diff --exit-code gen/
+          git diff --exit-code apis/
 
   docker:
     runs-on: ubuntu-latest
