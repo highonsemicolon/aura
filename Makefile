@@ -41,12 +41,15 @@ run-hot:
 	--build.send_interrupt=true \
 	--build.kill_delay=2s
 
-proto: $(wildcard proto/*.proto)
+PROTO_FILES := $(wildcard apis/*/*.proto)
+
+proto:
 	protoc \
-    --go_out=gen/ \
-    --go-grpc_out=gen/ \
-    proto/*.proto
-	@echo "Protobuf files generated in gen/ directory."
+	--go_out=apis/ \
+	--go-grpc_out=apis/ \
+	$(PROTO_FILES)
+	@echo "Protobuf files generated in apis/ directory."
+
 
 client:
 	go run -ldflags "$(LDFLAGS)" ./services/client
