@@ -75,6 +75,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: setup
     steps:
+      - name: Install protoc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+
+      - name: Install Go plugins for protoc
+        run: |
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+          export PATH=$PATH:$(go env GOPATH)/bin
+
       - uses: actions/checkout@v4
       - name: Check protobuf is up to date
         run: |
