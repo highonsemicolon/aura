@@ -9,9 +9,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
+	"github.com/highonsemicolon/aura/cmd/app/internal/config"
+	"github.com/highonsemicolon/aura/cmd/app/internal/handler"
 	pb "github.com/highonsemicolon/aura/gen/greeter"
-	"github.com/highonsemicolon/aura/internal/config"
-	"github.com/highonsemicolon/aura/internal/handler"
 	"github.com/highonsemicolon/aura/pkg/healthz"
 	"github.com/highonsemicolon/aura/pkg/logging"
 )
