@@ -14,10 +14,14 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Read Go version from go.mod
+      - name: Read Go version
         id: goversion
         run: |
-          GO_VERSION=$(grep '^go ' go.mod | awk '{print $2}')
+          if [ -f go.work ]; then
+            GO_VERSION=$(grep '^go ' go.work | awk '{print $2}')
+          else
+            GO_VERSION=$(grep '^go ' cmd/go.mod | awk '{print $2}')
+          fi
           echo "go-version=$GO_VERSION" >> $GITHUB_OUTPUT
 
       - name: Setup Go
@@ -30,10 +34,28 @@ jobs:
     needs: setup
     steps:
       - uses: actions/checkout@v4
-      - name: Verify dependencies
+      - name: Lint, verify deps, and run tests for all modules
         run: |
-          make tidy
-          git diff --exit-code go.mod go.sum
+          if [ -f go.work ]; then
+            MODULES=$(grep 'use ' go.work | awk '{print $2}')
+          else
+            MODULES="./cmd"
+          fi
+
+          for mod in $MODULES; do
+            echo "=== Processing $mod ==="
+            cd $mod
+
+            # Verify dependencies
+            go mod tidy
+            git diff --exit-code go.mod go.sum || exit 1
+
+            # Run tests
+            go test ./...
+
+            cd -
+          done
+
       - name: Format check
         run: |
           make fmt
@@ -72,5 +94,32 @@ jobs:
     needs: [lint-and-deps]
     steps:
       - uses: actions/checkout@v4
-      - name: Docker build
-        run: docker build -t aura:${{ github.sha }} .
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ needs.setup.outputs.go-version }}
+
+      - name: Build and push Docker images per service
+        run: |
+          if [ -f go.work ]; then
+            MODULES=$(grep 'use ' go.work | awk '{print $2}')
+          else
+            MODULES="./cmd"
+          fi
+
+          for mod in $MODULES; do
+            if [ -f "$mod/main.go" ]; then
+              SERVICE_NAME=$(basename $mod)
+              echo "Building Docker image for $SERVICE_NAME"
+
+              # Build the binary
+              BIN_DIR=$(mktemp -d)
+              go build -o $BIN_DIR/$SERVICE_NAME $mod
+
+              # Build Docker image using the template
+              docker build \
+                --build-arg SERVICE_BINARY=$SERVICE_NAME \
+                -t aura/${SERVICE_NAME}:${GITHUB_SHA} \
+                -f Dockerfile .
+            fi
+          done
