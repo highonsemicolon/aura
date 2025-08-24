@@ -1,0 +1,10 @@
+go 1.24.5
+
+use (
+	./cmd/app
+	./cmd/client
+	./gen
+	./pkg/healthz
+	./pkg/logging
+	./pkg/telemetry
+)
