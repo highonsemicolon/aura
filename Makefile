@@ -24,14 +24,14 @@ fmt:
 	go fmt ./...
 
 build:
-	@if [ ! -f cmd/app/main.go ]; then echo "Error: cmd/app/main.go not found!"; exit 1; fi
-	@go build $(GO_FLAGS)  -ldflags "$(LDFLAGS)" -o $(BINARY_NAME) ./cmd/app
+	@if [ ! -f services/app/main.go ]; then echo "Error: services/app/main.go not found!"; exit 1; fi
+	@go build $(GO_FLAGS)  -ldflags "$(LDFLAGS)" -o $(BINARY_NAME) ./services/app
 
 test:
 	@go test -v ./...
 	
 run:
-	@go run -ldflags "$(LDFLAGS)" ./cmd/app
+	@go run -ldflags "$(LDFLAGS)" ./services/app
 
 run-hot:
 	air \
@@ -49,7 +49,7 @@ proto: $(wildcard proto/*.proto)
 	@echo "Protobuf files generated in gen/ directory."
 
 client:
-	go run -ldflags "$(LDFLAGS)" ./cmd/client
+	go run -ldflags "$(LDFLAGS)" ./services/client
 
 setup-helm:
 	@echo "Setting up Helm..."
