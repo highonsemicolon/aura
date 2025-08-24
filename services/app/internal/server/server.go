@@ -11,7 +11,7 @@ import (
 
 	"github.com/highonsemicolon/aura/services/app/internal/config"
 	"github.com/highonsemicolon/aura/services/app/internal/handler"
-	pb "github.com/highonsemicolon/aura/apis/greeter"
+	pb "github.com/highonsemicolon/aura/apis/greeter/gen"
 	"github.com/highonsemicolon/aura/pkg/healthz"
 	"github.com/highonsemicolon/aura/pkg/logging"
 )

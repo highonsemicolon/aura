@@ -41,15 +41,18 @@ run-hot:
 	--build.send_interrupt=true \
 	--build.kill_delay=2s
 
-PROTO_FILES := $(wildcard apis/*/*.proto)
+PROTO_FILES := $(wildcard apis/*/proto/*.proto)
 
 proto:
-	protoc \
-	--go_out=apis/ \
-	--go-grpc_out=apis/ \
-	$(PROTO_FILES)
-	@echo "Protobuf files generated in apis/ directory."
-
+	@for file in $(PROTO_FILES); do \
+		service_dir=$$(dirname $$file | sed 's|/proto$$||'); \
+		mkdir -p $$service_dir/gen; \
+		protoc -I $$service_dir/proto \
+			--go_out=$$service_dir/gen --go_opt=paths=source_relative \
+			--go-grpc_out=$$service_dir/gen --go-grpc_opt=paths=source_relative \
+			$$file; \
+	done
+	@echo "Protobuf files generated in apis/*/gen directories."
 
 client:
 	go run -ldflags "$(LDFLAGS)" ./services/client
