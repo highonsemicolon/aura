@@ -1,4 +1,4 @@
-module github.com/highonsemicolon/aura/cmd/client
+module github.com/highonsemicolon/aura/services/client
 
 go 1.24.5
 
