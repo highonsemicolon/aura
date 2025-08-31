@@ -1,14 +1,40 @@
 version: 2
 
-updates:
-  - package-ecosystem: "gomod"
-    directory: "/" # root of the repo with go.work
-    schedule:
-      interval: "daily"
-    open-pull-requests-limit: 10
-    commit-message:
-      prefix: "deps"
+# Common settings for Go modules
+go_defaults: &go_defaults
+  package-ecosystem: "gomod"
+  schedule:
+    interval: "daily"
+  open-pull-requests-limit: 10
+  commit-message:
+    prefix: "deps"
+  rebase-strategy: "auto"
 
+updates:
+  # Root module (if it exists)
+  - <<: *go_defaults
+    directory: "/"
+
+  # All other Go modules
+  - <<: *go_defaults
+    directory: "/apis/greeter"
+
+  - <<: *go_defaults
+    directory: "/pkg/healthz"
+
+  - <<: *go_defaults
+    directory: "/pkg/logging"
+
+  - <<: *go_defaults
+    directory: "/pkg/telemetry"
+
+  - <<: *go_defaults
+    directory: "/services/app"
+
+  - <<: *go_defaults
+    directory: "/services/client"
+
+  # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: ".github/workflows"
     schedule:
