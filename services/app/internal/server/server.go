@@ -9,11 +9,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
-	pb "github.com/highonsemicolon/aura/gen/greeter"
-	"github.com/highonsemicolon/aura/internal/config"
-	"github.com/highonsemicolon/aura/internal/handler"
+	pb "github.com/highonsemicolon/aura/apis/greeter/gen"
 	"github.com/highonsemicolon/aura/pkg/healthz"
 	"github.com/highonsemicolon/aura/pkg/logging"
+	"github.com/highonsemicolon/aura/services/app/internal/config"
+	"github.com/highonsemicolon/aura/services/app/internal/handler"
 )
 
 func StartGRPCServer(ctx context.Context, cfg *config.Config, healthz *healthz.Healthz, log logging.Logger) error {

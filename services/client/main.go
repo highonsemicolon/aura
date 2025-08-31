@@ -4,7 +4,7 @@ import (
 	"context"
 	"os"
 
-	pb "github.com/highonsemicolon/aura/gen/greeter"
+	pb "github.com/highonsemicolon/aura/apis/greeter/gen"
 	"github.com/highonsemicolon/aura/pkg/logging"
 	"github.com/highonsemicolon/aura/pkg/telemetry"
 

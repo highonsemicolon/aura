@@ -1,14 +1,7 @@
-FROM golang:1.24.5 AS builder
-WORKDIR /app
-
-COPY go.mod go.sum ./
-RUN go mod download
-
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build
-
 FROM alpine:latest
 WORKDIR /app
 
-COPY --from=builder /app/tmp/main .
-CMD ["./main"]
+ARG SERVICE_BINARY
+COPY ${SERVICE_BINARY} ./bin/${SERVICE_BINARY}
+
+CMD ["./bin/${SERVICE_BINARY}"]
