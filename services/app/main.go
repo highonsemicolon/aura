@@ -7,11 +7,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/highonsemicolon/aura/services/app/internal/config"
-	"github.com/highonsemicolon/aura/services/app/internal/server"
 	"github.com/highonsemicolon/aura/pkg/healthz"
 	"github.com/highonsemicolon/aura/pkg/logging"
 	"github.com/highonsemicolon/aura/pkg/telemetry"
+	"github.com/highonsemicolon/aura/services/app/internal/config"
+	"github.com/highonsemicolon/aura/services/app/internal/server"
 )
 
 func main() {
