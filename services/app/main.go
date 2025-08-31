@@ -14,6 +14,13 @@ import (
 	"github.com/highonsemicolon/aura/services/app/internal/server"
 )
 
+var (
+    Version   = "dev"
+    Commit    = ""
+    BuildTime = ""
+    BuiltBy   = ""
+)
+
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -28,6 +35,11 @@ func main() {
 	cfg := config.LoadConfig()
 
 	logAdapter := logging.NewZerologAdapter(cfg.Logging.Format, cfg.Logging.Level)
+
+	logAdapter.Info("version:", Version)
+	logAdapter.Info("commit:", Commit)
+	logAdapter.Info("build_time:", BuildTime)
+	logAdapter.Info("built_by:", BuiltBy)
 
 	shutdownTelemetry := telemetry.InitTracer(ctx, cfg.ServiceName, cfg.OTEL.Endpoint)
 	defer func() {
