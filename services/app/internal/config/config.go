@@ -13,9 +13,13 @@ import (
 
 type Config struct {
 	ServiceName string  `koanf:"service_name" validate:"required"`
-	Port        int     `koanf:"port" validate:"required"`
+	GRPC        gRPC    `koanf:"grpc" validate:"required"`
 	OTEL        OTEL    `koanf:"otel"`
 	Logging     Logging `koanf:"logging"`
+}
+
+type gRPC struct {
+	Address string `koanf:"address" validate:"required"`
 }
 
 type Logging struct {

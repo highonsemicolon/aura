@@ -17,7 +17,7 @@ import (
 )
 
 func StartGRPCServer(ctx context.Context, cfg *config.Config, healthz *healthz.Healthz, log logging.Logger) error {
-	listener, err := net.Listen("tcp", ":50051")
+	listener, err := net.Listen("tcp", cfg.GRPC.Address)
 	if err != nil {
 		return fmt.Errorf("failed to listen: %w", err)
 	}
@@ -35,7 +35,7 @@ func StartGRPCServer(ctx context.Context, cfg *config.Config, healthz *healthz.H
 
 	errCh := make(chan error, 1)
 	go func() {
-		log.InfoF("gRPC server listening on %s", " :50051")
+		log.InfoF("gRPC server listening on %s", cfg.GRPC.Address)
 		if serveErr := s.Serve(listener); serveErr != nil {
 			errCh <- serveErr
 		}

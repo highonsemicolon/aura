@@ -40,7 +40,7 @@ func main() {
 	)
 
 	conn, err := grpc.NewClient(
-		"localhost:50051",
+		"localhost:8080",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 	)
