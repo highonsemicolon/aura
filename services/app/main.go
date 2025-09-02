@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,23 +16,13 @@ import (
 )
 
 var (
-    Version   = "dev"
-    Commit    = ""
-    BuildTime = ""
-    BuiltBy   = ""
+	Version   = "dev"
+	Commit    = ""
+	BuildTime = ""
+	BuiltBy   = ""
 )
 
-func main() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-sigCh
-		cancel()
-	}()
-
+func run(ctx context.Context) error {
 	cfg := config.LoadConfig()
 
 	logAdapter := logging.NewZerologAdapter(cfg.Logging.Format, cfg.Logging.Level)
@@ -56,9 +47,9 @@ func main() {
 	defer healthz.Stop()
 
 	if err := server.StartGRPCServer(ctx, cfg, healthz, logAdapter); err != nil {
-		logAdapter.Error("gRPC server failed", err)
-		os.Exit(1)
+		return fmt.Errorf("failed to start gRPC server: %w", err)
 	}
+	return nil
 }
 
 func checkDBConnection() healthz.Checker {
@@ -66,5 +57,23 @@ func checkDBConnection() healthz.Checker {
 		_, cancel := context.WithTimeout(ctx, 1*time.Second)
 		defer cancel()
 		return true
+	}
+}
+
+func main() {
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-sigCh
+		cancel()
+	}()
+
+	if err := run(ctx); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
 	}
 }
