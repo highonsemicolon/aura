@@ -50,7 +50,12 @@ func main() {
 		log.Error("failed to connect:", err)
 		return
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			span.RecordError(err)
+			log.Error("failed to close gRPC connection:", err)
+		}
+	}()
 
 	client := pb.NewGreeterClient(conn)
 
