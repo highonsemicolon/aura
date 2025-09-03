@@ -1,85 +1,187 @@
 MAKEFLAGS += --no-print-directory
 
-BINARY_NAME ?= tmp/main
-GO_VERSION ?= 1.24.5
-GO_FLAGS ?= -v
-GOBIN ?= $(shell go env GOBIN)
+# ==== Project metadata ====
+APP_NAME        ?= aura
+BINARY_DIR      ?= .bin
+BUILD_DIR       ?= .build
+BINARY_NAME     ?= $(BINARY_DIR)/$(APP_NAME)
+GO_VERSION      ?= 1.22
+GO_FLAGS        ?= -trimpath -buildvcs=false
+GOBIN           ?= $(shell go env GOBIN)
 ifeq ($(GOBIN),)
   GOBIN := $(shell go env GOPATH)/bin
 endif
 
-APP_NAME := aura
-VERSION := 0.1
-COMMIT_HASH := $(shell git rev-parse HEAD)
-BUILD_TIME := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
-BUILD_HOST := $(shell hostname)
-MODULES := $(shell go list -m -f '{{.Dir}}')
-LDFLAGS := 
-PROTO_FILES := $(wildcard apis/*/proto/*.proto)
+# Versions & metadata
+VERSION         ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo 0.1.0)
+COMMIT_HASH     := $(shell git rev-parse --short=12 HEAD)
+BUILD_TIME      := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
+BUILD_HOST      := $(shell hostname)
 
+# Go modules (top-level and nested)
+MODULES         := $(shell go list -m -f '{{.Dir}}')
+SERVICES        := $(shell ls -d services/* 2>/dev/null | xargs -n1 basename)
+
+# Linker flags for versioning (expect main package to expose these variables)
+# Example in Go: var (
+#   Version = "dev"; Commit = ""; BuildTime = ""; BuiltBy = "make"
+# )
+LDFLAGS         := -X 'main.Version=$(VERSION)' \
+                   -X 'main.Commit=$(COMMIT_HASH)' \
+                   -X 'main.BuildTime=$(BUILD_TIME)' \
+                   -X 'main.BuiltBy=$(BUILD_HOST)'
+
+PROTO_DIRS      := $(shell find apis -type d -name proto 2>/dev/null)
+PROTOC_GEN_GO    = $(GOBIN)/protoc-gen-go
+PROTOC_GEN_GRPC  = $(GOBIN)/protoc-gen-go-grpc
+
+.DEFAULT_GOAL := help
+
+help:
+	@echo "Targets:"; \
+	echo "  tidy              - go mod tidy across modules"; \
+	echo "  fmt               - go fmt across modules"; \
+	echo "  lint              - run golangci-lint & go vet"; \
+	echo "  test              - unit tests"; \
+	echo "  cover             - tests with coverage + threshold"; \
+	echo "  build             - build all services"; \
+	echo "  run SERVICE=app   - run a single service"; \
+	echo "  proto             - generate protobuf via buf (fallback to protoc)"; \
+	echo "  docker-build      - build docker images for all services"; \
+	echo "  docker-push       - push docker images (requires REGISTRY/IMAGE_OWNER)"; \
+	echo "  release           - build binaries w/ metadata";
 
 print-go-version:
-	@echo $(GO_VERSION)
+	@go version
+
+# ---- Hygiene ----
 
 tidy:
-	@go mod tidy
-
-lint:
-	@echo "Linting (per module)..."
 	@for m in $(MODULES); do \
-		echo "→ Linting $$m"; \
-		(cd $$m && go vet ./...); \
+		cd $$m && go mod tidy; \
 	done
 
 fmt:
-	@echo "Formatting all modules..."
 	@for m in $(MODULES); do \
-		echo "→ Formatting $$m"; \
-		(cd $$m && go fmt ./...); \
+		cd $$m && go fmt ./...; \
 	done
 
-build:
-	@if [ ! -f services/app/main.go ]; then echo "Error: services/app/main.go not found!"; exit 1; fi
-	@go build $(GO_FLAGS)  -ldflags "$(LDFLAGS)" -o $(BINARY_NAME) ./services/app
+lint:
+	@command -v golangci-lint >/dev/null 2>&1 || { echo "Installing golangci-lint..."; \
+		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOBIN) v2.4.0; };
+	@for m in $(MODULES); do \
+		echo "→ golangci-lint $$m"; \
+		(cd $$m && golangci-lint run ./...); \
+		echo "→ go vet $$m"; \
+		(cd $$m && go vet ./...); \
+	done
 
+# ---- Tests ----
+
+COVER_PROFILE := $(BUILD_DIR)/coverage.out
+COVER_HTML    := $(BUILD_DIR)/coverage.html
+COVER_MIN     ?= 00
+
+$(BUILD_DIR):
+	@mkdir -p $(BUILD_DIR)
+
+cover: $(BUILD_DIR)
+	@rm -f $(COVER_PROFILE)
+	@for m in $(MODULES); do \
+		echo "→ Testing $$m"; \
+		MOD_NAME=$$(basename $$m); \
+		COVER_FILE=$(BUILD_DIR)/$$MOD_NAME.cover.out; \
+		go test -coverprofile=$$COVER_FILE -covermode=atomic -race $$m/... || exit 1; \
+		if [ -f $$COVER_FILE ]; then \
+			if [ ! -f $(COVER_PROFILE) ]; then \
+				cp $$COVER_FILE $(COVER_PROFILE); \
+			else \
+				tail -n +2 $$COVER_FILE >> $(COVER_PROFILE); \
+			fi \
+		fi; \
+	done
+	@go tool cover -func=$(COVER_PROFILE) | tee $(BUILD_DIR)/coverage.txt
+	@TOTAL=$$(go tool cover -func=$(COVER_PROFILE) | tail -n 1 | awk '{print $$3}' | sed 's/%//'); \
+	if [ $${TOTAL%.*} -lt $(COVER_MIN) ]; then \
+		echo "\nCoverage $$TOTAL% is below threshold $(COVER_MIN)%"; exit 1; \
+	fi
+	@go tool cover -html=$(COVER_PROFILE) -o $(COVER_HTML)
+	@echo "Coverage OK (>= $(COVER_MIN)%)"
+
+
+# Simple multi-module test target
 test:
-	@go test -v ./...
-	
-run:
-	@go run -ldflags "$(LDFLAGS)" ./services/app
+	@for m in $(MODULES); do \
+		echo "→ Running tests for $$m"; \
+		go test -race -v $$m/... || exit 1; \
+	done
 
-run-hot:
-	air \
-	--build.pre_cmd="make tidy" \
-	--build.cmd="make build" \
-	--build.bin="$(BINARY_NAME)" \
-	--build.send_interrupt=true \
-	--build.kill_delay=2s
+# ---- Build / Run ----
+
+build: $(BINARY_DIR)
+	@for svc in $(SERVICES); do \
+		if [ -f services/$$svc/main.go ]; then \
+			echo "Building $$svc"; \
+			GOOS=$${GOOS:-linux} GOARCH=$${GOARCH:-amd64} \
+			go build $(GO_FLAGS) -ldflags "$(LDFLAGS)" -o $(BINARY_DIR)/$$svc ./services/$$svc; \
+		fi; \
+	done
+
+$(BINARY_DIR):
+	@mkdir -p $(BINARY_DIR)
+
+run:
+ifndef SERVICE
+	$(error Usage: make run SERVICE=app)
+endif
+	@go run -ldflags "$(LDFLAGS)" ./services/$(SERVICE)
+
+release: clean build
+	@echo "Binaries in $(BINARY_DIR)"
+
+clean:
+	@rm -rf $(BINARY_DIR) $(BUILD_DIR)
+
+# ---- Protobuf ----
 
 proto:
-	@for file in $(PROTO_FILES); do \
-		service_dir=$$(dirname $$file | sed 's|/proto$$||'); \
+	@echo "Generating protobuf with protoc"; \
+	for d in $(PROTO_DIRS); do \
+		service_dir=$$(dirname $$d); \
 		mkdir -p $$service_dir/gen; \
-		protoc -I $$service_dir/proto \
-			--plugin=protoc-gen-go=$(GOBIN)/protoc-gen-go \
-			--plugin=protoc-gen-go-grpc=$(GOBIN)/protoc-gen-go-grpc \
+		protoc -I $$d \
+			--plugin=protoc-gen-go=$(PROTOC_GEN_GO) \
+			--plugin=protoc-gen-go-grpc=$(PROTOC_GEN_GRPC) \
 			--go_out=$$service_dir/gen --go_opt=paths=source_relative \
 			--go-grpc_out=$$service_dir/gen --go-grpc_opt=paths=source_relative \
-			$$file; \
+			$$d/*.proto; \
+	done; \
+
+# ---- Docker ----
+
+REGISTRY     ?= ghcr.io
+IMAGE_OWNER  ?= $$GITHUB_REPOSITORY_OWNER
+IMAGE_TAG    ?= $(VERSION)-$(COMMIT_HASH)
+
+# Build all service images using a shared Dockerfile template
+# Expect per-service build context at repo root with ARG SERVICE=<name>
+
+docker-build:
+	@for svc in $(SERVICES); do \
+		if [ -f services/$$svc/main.go ]; then \
+			IMG=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$$svc:$(IMAGE_TAG); \
+			echo "Building $$svc as $$IMG"; \
+			docker build --build-arg SERVICE=$$svc -t $$IMG -f Dockerfile .; \
+		fi; \
 	done
-	@echo "Protobuf files generated in apis/*/gen directories."
 
-client:
-	go run -ldflags "$(LDFLAGS)" ./services/client
+# Push all images
 
-setup-helm:
-	@echo "Setting up Helm..."
-	@helm repo add highonsemicolon https://highonsemicolon.github.io/charts
-	@helm repo update
-
-deploy:
-	helm upgrade --install \
-		$(APP_NAME) \
-		highonsemicolon/pathfinder \
-		--set image.tag=$(VERSION) \
-		-f helm/values.yaml
+docker-push:
+	@for svc in $(SERVICES); do \
+		if [ -f services/$$svc/main.go ]; then \
+			IMG=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$$svc:$(IMAGE_TAG); \
+			echo "Pushing $$IMG"; \
+			docker push $$IMG; \
+		fi; \
+	done

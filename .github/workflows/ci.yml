@@ -1,89 +1,161 @@
-name: CI
+name: ci
 
 on:
-  pull_request:
   push:
-    branches: [main]
+    branches: [ main ]
+    tags: [ 'v*.*.*' ]
+  pull_request:
+
+permissions:
+  contents: read
+  packages: write   # needed for GHCR
+  id-token: write   # for OIDC (optional)
+
+env:
+  APP_NAME: aura
+  REGISTRY: ghcr.io
+  IMAGE_OWNER: ${{ github.repository_owner }}
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
-      go-version: ${{ steps.goversion.outputs.go-version }}
+      go: ${{ steps.goversion.outputs.go }}
+      version: ${{ steps.meta.outputs.version }}
+      sha: ${{ github.sha }}
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v5
-
-      - name: Read Go version
-        id: goversion
+      - uses: actions/checkout@v4
+      - id: goversion
+        shell: bash
         run: |
-          if [ -f go.work ]; then
-            GO_VERSION=$(grep '^go ' go.work | awk '{print $2}')
+          if [[ -f go.work ]]; then
+            GO=$(grep '^go ' go.work | awk '{print $2}')
           else
-            GO_VERSION=$(grep '^go ' cmd/go.mod | awk '{print $2}')
+            GO=$(grep '^go ' services/app/go.mod | awk '{print $2}')
           fi
-          echo "go-version=$GO_VERSION" >> $GITHUB_OUTPUT
+          echo "go=$GO" >> $GITHUB_OUTPUT
+      - id: meta
+        run: |
+          DESCRIBE=$(git describe --tags --always --dirty 2>/dev/null || echo 0.1.0)
+          echo "version=$DESCRIBE" >> $GITHUB_OUTPUT
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ steps.goversion.outputs.go-version }}
-
-  lint-deps-and-tests:
+  lint-test:
     runs-on: ubuntu-latest
     needs: setup
     steps:
-      - uses: actions/checkout@v5
-      - name: Lint, verify deps, and run tests for all modules
-        run: |
-          make lint
-
-      - name: Format check
-        run: |
-          make fmt
-          git diff --exit-code
-
-  build:
-    runs-on: ubuntu-latest
-    needs: setup
-    steps:
-      - uses: actions/checkout@v5
-      - name: Build server
-        run: make build
-      - name: Build client
-        run: make client
-
-  docker:
-    runs-on: ubuntu-latest
-    needs: [lint-deps-and-tests]
-    steps:
-      - uses: actions/checkout@v5
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
-          go-version: ${{ needs.setup.outputs.go-version }}
-
-      - name: Build and push Docker images per service
+          go-version: ${{ needs.setup.outputs.go }}
+          cache: true
+      - name: Cache go-build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Install golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.60.3
+      - name: Lint
+        run: golangci-lint run ./...
+      - name: go vet
+        run: go vet ./...
+      - name: Unit tests with coverage
         run: |
-          if [ -f go.work ]; then
-            MODULES=$(grep 'use ' go.work | awk '{print $2}')
-          else
-            MODULES="./cmd"
-          fi
+          mkdir -p .build
+          go test ./... -race -coverprofile=.build/coverage.out -covermode=atomic
+          go tool cover -func=.build/coverage.out | tee .build/coverage.txt
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: .build/coverage.*
 
-          for mod in $MODULES; do
-            if [ -f "$mod/main.go" ]; then
-              SERVICE_NAME=$(basename $mod)
-              echo "Building Docker image for $SERVICE_NAME"
-
-              # Build the binary
-              BIN_DIR=$(mktemp -d)
-              go build -o $BIN_DIR/$SERVICE_NAME $mod
-
-              # Build Docker image using the template
+  build-images:
+    runs-on: ubuntu-latest
+    needs: [setup, lint-test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ needs.setup.outputs.go }}
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Discover services
+        id: svcs
+        shell: bash
+        run: |
+          set -euo pipefail
+          SVC_LIST=$(ls -d services/* 2>/dev/null | xargs -n1 basename)
+          echo "services=$SVC_LIST" >> $GITHUB_OUTPUT
+      - name: Build & push images
+        env:
+          VERSION: ${{ needs.setup.outputs.version }}
+          COMMIT: ${{ needs.setup.outputs.sha }}
+        run: |
+          for svc in ${{ steps.svcs.outputs.services }}; do
+            if [[ -f services/$svc/main.go ]]; then
+              IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.APP_NAME }}-$svc:${VERSION}-${COMMIT}
               docker build \
-                --build-arg SERVICE_BINARY=$SERVICE_NAME \
-                -t aura/${SERVICE_NAME}:${GITHUB_SHA} \
+                --build-arg SERVICE=$svc \
+                -t $IMAGE \
                 -f Dockerfile .
+              docker push $IMAGE
+              # convenience tags on main branch
+              if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+                docker tag $IMAGE ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.APP_NAME }}-$svc:latest
+                docker push ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.APP_NAME }}-$svc:latest
+              fi
             fi
           done
+
+  scan-images:
+    runs-on: ubuntu-latest
+    needs: build-images
+    if: github.event_name != 'pull_request' # reduce PR noise; toggle as desired
+    steps:
+      - uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: repo
+          ignore-unfixed: true
+          format: table
+          severity: CRITICAL,HIGH
+
+  helm-deploy:
+    runs-on: ubuntu-latest
+    needs: build-images
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.4
+      - name: Helm repo setup
+        run: |
+          helm repo add highonsemicolon https://highonsemicolon.github.io/charts
+          helm repo update
+      - name: Deploy/upgrade
+        env:
+          VERSION: ${{ needs.setup.outputs.version }}
+          COMMIT: ${{ needs.setup.outputs.sha }}
+        run: |
+          # Example values; wire in your kubecontext via env or action
+          CHART=highonsemicolon/pathfinder
+          RELEASE=${{ env.APP_NAME }}
+          helm upgrade --install "$RELEASE" "$CHART" \
+            --set image.tag=${VERSION}-${COMMIT} \
+            -f helm/values.yaml
