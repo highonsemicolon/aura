@@ -1,3 +1,5 @@
 .vscode
 tmp
 .env
+.bin
+.build
