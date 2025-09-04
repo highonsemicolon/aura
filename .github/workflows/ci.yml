@@ -96,7 +96,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          SVC_LIST=$(ls -d services/* 2>/dev/null | xargs -n1 basename)
+          # List services in a single space-separated string
+          SVC_LIST=$(ls -d services/* 2>/dev/null | xargs -n1 basename | tr '\n' ' ')
           echo "services=$SVC_LIST" >> $GITHUB_OUTPUT
       - name: Build & push images
         env:
