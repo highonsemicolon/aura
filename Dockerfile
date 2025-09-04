@@ -25,6 +25,6 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /app
 ARG SERVICE
-COPY --from=build /out/${SERVICE} /app/${SERVICE}
+COPY --from=build /out/${SERVICE} ./main
 USER nonroot:nonroot
-ENTRYPOINT ["/app/${SERVICE}"]
+ENTRYPOINT ["/app/main"]
