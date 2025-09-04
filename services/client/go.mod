@@ -1,6 +1,6 @@
 module github.com/highonsemicolon/aura/services/client
 
-go 1.24.5
+go 1.25.0
 
 require (
 	github.com/highonsemicolon/aura/apis/greeter v0.0.0-20250831154025-5cdd2eae1524

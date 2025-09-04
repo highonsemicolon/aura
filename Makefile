@@ -5,7 +5,7 @@ APP_NAME        ?= aura
 BINARY_DIR      ?= .bin
 BUILD_DIR       ?= .build
 BINARY_NAME     ?= $(BINARY_DIR)/$(APP_NAME)
-GO_VERSION      ?= 1.22
+GO_VERSION      ?= 1.25
 GO_FLAGS        ?= -trimpath -buildvcs=false
 GOBIN           ?= $(shell go env GOBIN)
 ifeq ($(GOBIN),)
