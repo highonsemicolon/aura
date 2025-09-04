@@ -160,7 +160,12 @@ proto:
 # ---- Docker ----
 
 REGISTRY     ?= ghcr.io
-IMAGE_OWNER  ?= $$GITHUB_REPOSITORY_OWNER
+IMAGE_OWNER  ?= $(shell \
+  if [ -n "$$GITHUB_REPOSITORY_OWNER" ]; then \
+    echo $$GITHUB_REPOSITORY_OWNER; \
+  else \
+    git config --get remote.origin.url | sed -n 's#.*github.com[:/]\([^/]*\)/.*#\1#p'; \
+  fi)
 IMAGE_TAG    ?= $(VERSION)-$(COMMIT_HASH)
 
 # Build all service images using a shared Dockerfile template
