@@ -126,7 +126,7 @@ jobs:
     needs: docker-images
     # if: github.event_name != 'pull_request' # reduce PR noise; toggle as desired
     steps:
-      - uses: aquasecurity/trivy-action@0.24.0
+      - uses: aquasecurity/trivy-action@0.33.1
         with:
           scan-type: repo
           ignore-unfixed: true
