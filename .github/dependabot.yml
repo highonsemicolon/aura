@@ -1,38 +1,59 @@
 version: 2
 
-# Common settings for Go modules
-go_defaults: &go_defaults
-  package-ecosystem: "gomod"
-  schedule:
-    interval: "daily"
-  open-pull-requests-limit: 10
-  commit-message:
-    prefix: "deps"
-  rebase-strategy: "auto"
-
 updates:
-  # Root module (if it exists)
-  - <<: *go_defaults
-    directory: "/"
-
-  # All other Go modules
-  - <<: *go_defaults
+  - package-ecosystem: "gomod"
     directory: "/apis/greeter"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+    rebase-strategy: "auto"
 
-  - <<: *go_defaults
+  - package-ecosystem: "gomod"
     directory: "/pkg/healthz"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+    rebase-strategy: "auto"
 
-  - <<: *go_defaults
+  - package-ecosystem: "gomod"
     directory: "/pkg/logging"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+    rebase-strategy: "auto"
 
-  - <<: *go_defaults
+  - package-ecosystem: "gomod"
     directory: "/pkg/telemetry"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+    rebase-strategy: "auto"
 
-  - <<: *go_defaults
+  - package-ecosystem: "gomod"
     directory: "/services/app"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+    rebase-strategy: "auto"
 
-  - <<: *go_defaults
+  - package-ecosystem: "gomod"
     directory: "/services/client"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+    rebase-strategy: "auto"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
