@@ -48,7 +48,7 @@ jobs:
     needs: setup
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: ${{ needs.setup.outputs.go }}
           cache: true
@@ -82,7 +82,7 @@ jobs:
     needs: [setup, lint-test]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: ${{ needs.setup.outputs.go }}
       - name: Log in to GHCR
