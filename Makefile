@@ -4,7 +4,6 @@ MAKEFLAGS += --no-print-directory
 APP_NAME        ?= aura
 BINARY_DIR      ?= .bin
 BUILD_DIR       ?= .build
-BINARY_NAME     ?= $(BINARY_DIR)/$(APP_NAME)
 GO_VERSION      ?= 1.25
 GO_FLAGS        ?= -trimpath -buildvcs=false
 GOBIN           ?= $(shell go env GOBIN)
@@ -188,4 +187,21 @@ docker-push:
 				docker push $$LATEST; \
 			fi; \
 		fi; \
+	done
+
+# ---- Helm ----
+
+HELM_CHART ?= highonsemicolon/pathfinder
+HELM_VALUES_DIR ?= helm/values
+HELM_NAMESPACE ?= default
+
+helm-deploy:
+	@for svc in $(SERVICES); do \
+		HELM_RELEASE="$(APP_NAME)-$$svc"; \
+		echo "Deploying $$HELM_RELEASE using chart $(HELM_CHART)"; \
+		helm upgrade --install "$$HELM_RELEASE" "$(HELM_CHART)" \
+			--set image.tag=$(IMAGE_TAG) \
+			-f $(HELM_VALUES_DIR)/$$svc.yaml \
+			--namespace $(HELM_NAMESPACE) \
+			--create-namespace; \
 	done

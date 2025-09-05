@@ -1,0 +1,10 @@
+nameOverride: "aura-client"
+fullnameOverride: "aura-client"
+
+image:
+  repository: aura-client
+  tag: latest
+
+env:
+  secret:
+  configMap:
