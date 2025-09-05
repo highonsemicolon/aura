@@ -165,28 +165,44 @@ IMAGE_TAG    ?= $(VERSION)-$(COMMIT_HASH)
 # Build all service images using a shared Dockerfile template
 # Expect per-service build context at repo root with ARG SERVICE=<name>
 
-docker-build:
+docker-build-one:
+ifndef SERVICE
+	$(error Usage: make docker-build-one SERVICE=app)
+endif
 	@export DOCKER_BUILDKIT=1; \
-	for svc in $(SERVICES); do \
-		if [ -f services/$$svc/main.go ]; then \
-			IMG=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$$svc:$(IMAGE_TAG); \
-			echo "Building $$svc as $$IMG"; \
-			docker build --build-arg SERVICE=$$svc -t $$IMG -f Dockerfile .; \
+	if [ -f services/$(SERVICE)/main.go ]; then \
+		IMG=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$(SERVICE):$(IMAGE_TAG); \
+		echo "Building $(SERVICE) as $$IMG"; \
+		docker build --build-arg SERVICE=$(SERVICE) -t $$IMG -f Dockerfile .; \
+	else \
+		echo "Service $(SERVICE) not found"; exit 1; \
+	fi
+
+docker-push-one:
+ifndef SERVICE
+	$(error Usage: make docker-push-one SERVICE=app)
+endif
+	@if [ -f services/$(SERVICE)/main.go ]; then \
+		IMG=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$(SERVICE):$(IMAGE_TAG); \
+		echo "Pushing $$IMG"; \
+		docker push $$IMG; \
+		if [ "$(BRANCH)" = "main" ]; then \
+			LATEST=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$(SERVICE):latest; \
+			docker tag $$IMG $$LATEST; \
+			docker push $$LATEST; \
 		fi; \
+	else \
+		echo "Service $(SERVICE) not found"; exit 1; \
+	fi
+
+docker-build:
+	@for svc in $(SERVICES); do \
+		$(MAKE) docker-build-one SERVICE=$$svc; \
 	done
 
 docker-push:
 	@for svc in $(SERVICES); do \
-		if [ -f services/$$svc/main.go ]; then \
-			IMG=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$$svc:$(IMAGE_TAG); \
-			echo "Pushing $$IMG"; \
-			docker push $$IMG; \
-			if [ "$(BRANCH)" = "main" ]; then \
-				LATEST=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$$svc:latest; \
-				docker tag $$IMG $$LATEST; \
-				docker push $$LATEST; \
-			fi; \
-		fi; \
+		$(MAKE) docker-push-one SERVICE=$$svc; \
 	done
 
 # ---- Helm ----
