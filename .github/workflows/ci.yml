@@ -80,45 +80,40 @@ jobs:
   docker-images:
     runs-on: ubuntu-latest
     needs: [setup, lint-test]
+    strategy:
+      matrix:
+        service: ${{ fromJSON(needs.setup.outputs.services) }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-go@v6
         with:
           go-version: ${{ needs.setup.outputs.go }}
+
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Discover services
-        id: svcs
-        shell: bash
-        run: |
-          set -euo pipefail
-          # List services in a single space-separated string
-          SVC_LIST=$(ls -d services/* 2>/dev/null | xargs -n1 basename | tr '\n' ' ')
-          echo "services=$SVC_LIST" >> $GITHUB_OUTPUT
-      - name: Build images
-        run: make docker-build
-        env:
-          VERSION: ${{ needs.setup.outputs.version }}
-          COMMIT: ${{ needs.setup.outputs.sha }}
-          APP_NAME: ${{ env.APP_NAME }}
-          REGISTRY: ${{ env.REGISTRY }}
-          IMAGE_OWNER: ${{ env.IMAGE_OWNER }}
-          SERVICES: ${{ steps.svcs.outputs.services }}
 
-      - name: Push images
-        if: github.event_name != 'pull_request'
-        run: make docker-push
+      - name: Build image
+        run: make docker-build-one SERVICE=${{ matrix.service }}
         env:
           VERSION: ${{ needs.setup.outputs.version }}
           COMMIT: ${{ needs.setup.outputs.sha }}
-          APP_NAME: ${{ env.APP_NAME }}
           REGISTRY: ${{ env.REGISTRY }}
           IMAGE_OWNER: ${{ env.IMAGE_OWNER }}
-          SERVICES: ${{ steps.svcs.outputs.services }}
+          APP_NAME: ${{ env.APP_NAME }}
+
+      - name: Push image
+        if: github.event_name != 'pull_request'
+        run: make docker-push-one SERVICE=${{ matrix.service }}
+        env:
+          VERSION: ${{ needs.setup.outputs.version }}
+          COMMIT: ${{ needs.setup.outputs.sha }}
+          REGISTRY: ${{ env.REGISTRY }}
+          IMAGE_OWNER: ${{ env.IMAGE_OWNER }}
+          APP_NAME: ${{ env.APP_NAME }}
           BRANCH: ${{ github.ref_name }}
 
   scan-images:
