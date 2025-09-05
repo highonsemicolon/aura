@@ -160,19 +160,15 @@ proto:
 # ---- Docker ----
 
 REGISTRY     ?= ghcr.io
-IMAGE_OWNER  ?= $(shell \
-  if [ -n "$$GITHUB_REPOSITORY_OWNER" ]; then \
-    echo $$GITHUB_REPOSITORY_OWNER; \
-  else \
-    git config --get remote.origin.url | sed -n 's#.*github.com[:/]\([^/]*\)/.*#\1#p'; \
-  fi)
+IMAGE_OWNER  ?= $(shell basename $(shell dirname $(shell git remote get-url origin 2>/dev/null || echo unknown/unknown)))
 IMAGE_TAG    ?= $(VERSION)-$(COMMIT_HASH)
 
 # Build all service images using a shared Dockerfile template
 # Expect per-service build context at repo root with ARG SERVICE=<name>
 
 docker-build:
-	@for svc in $(SERVICES); do \
+	@export DOCKER_BUILDKIT=1; \
+	for svc in $(SERVICES); do \
 		if [ -f services/$$svc/main.go ]; then \
 			IMG=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$$svc:$(IMAGE_TAG); \
 			echo "Building $$svc as $$IMG"; \
@@ -180,13 +176,16 @@ docker-build:
 		fi; \
 	done
 
-# Push all images
-
 docker-push:
 	@for svc in $(SERVICES); do \
 		if [ -f services/$$svc/main.go ]; then \
 			IMG=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$$svc:$(IMAGE_TAG); \
 			echo "Pushing $$IMG"; \
 			docker push $$IMG; \
+			if [ "$(BRANCH)" = "main" ]; then \
+				LATEST=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$$svc:latest; \
+				docker tag $$IMG $$LATEST; \
+				docker push $$LATEST; \
+			fi; \
 		fi; \
 	done
