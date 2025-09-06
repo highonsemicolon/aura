@@ -177,8 +177,6 @@ else
 	BUILD_PLATFORMS=$(PLATFORMS)
 endif
 
-if [ "$(PUSH)" = "true" ]; then PUSH_FLAG="--push"; else PUSH_FLAG=""; fi;
-
 docker-build-one:
 ifndef SERVICE
 	$(error Usage: make docker-build-one SERVICE=app)
