@@ -105,21 +105,10 @@ jobs:
         with:
           buildkitd-flags: --debug
 
-      - name: Build & push
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
-          build-args: |
-            SERVICE=${{ matrix.service }}
-            VERSION=${{ needs.setup.outputs.version }}
-            COMMIT=${{ needs.setup.outputs.sha }}
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.APP_NAME }}-${{ matrix.service }}:${{ needs.setup.outputs.version }}-${{ needs.setup.outputs.sha }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.APP_NAME }}-${{ matrix.service }}:latest
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.APP_NAME }}-${{ matrix.service }}:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.APP_NAME }}-${{ matrix.service }}:buildcache,mode=max
+      - name: Build & push Docker image
+        run: |
+          make docker-build-one SERVICE=${{ matrix.service }} LOCAL=false PUSH=true
+
 
   scan-images:
     runs-on: ubuntu-latest

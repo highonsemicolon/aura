@@ -159,19 +159,44 @@ proto:
 REGISTRY     ?= ghcr.io
 IMAGE_OWNER  ?= $(shell basename $(shell dirname $(shell git remote get-url origin 2>/dev/null || echo unknown/unknown)))
 IMAGE_TAG    ?= $(VERSION)-$(COMMIT_HASH)
+DOCKER_BUILDKIT ?= 1
+PLATFORMS    ?= linux/amd64,linux/arm64
+PUSH         ?= false
+LOCAL ?= true
 
 # Build all service images using a shared Dockerfile template
 # Expect per-service build context at repo root with ARG SERVICE=<name>
+
+ifeq ($(LOCAL),true)
+    CACHE_FROM=
+    CACHE_TO=
+	BUILD_PLATFORMS=linux/amd64
+else
+    CACHE_FROM=--cache-from=type=registry,ref=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$(SERVICE):buildcache
+    CACHE_TO=--cache-to=type=registry,ref=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$(SERVICE):buildcache,mode=max
+	BUILD_PLATFORMS=$(PLATFORMS)
+endif
+
+if [ "$(PUSH)" = "true" ]; then PUSH_FLAG="--push"; else PUSH_FLAG=""; fi;
 
 docker-build-one:
 ifndef SERVICE
 	$(error Usage: make docker-build-one SERVICE=app)
 endif
-	@export DOCKER_BUILDKIT=1; \
-	if [ -f services/$(SERVICE)/main.go ]; then \
+	@if [ -f services/$(SERVICE)/main.go ]; then \
 		IMG=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$(SERVICE):$(IMAGE_TAG); \
-		echo "Building $(SERVICE) as $$IMG"; \
-		docker build --build-arg SERVICE=$(SERVICE) -t $$IMG -f Dockerfile .; \
+		echo "=== Building $(SERVICE) -> $$IMG ==="; \
+		docker buildx build \
+			--platform $(BUILD_PLATFORMS) \
+			--build-arg SERVICE=$(SERVICE) \
+			--build-arg VERSION=$(VERSION) \
+			--build-arg COMMIT=$(COMMIT_HASH) \
+			$(CACHE_FROM) \
+    		$(CACHE_TO) \
+			-t $$IMG \
+			-f Dockerfile \
+			$(if $(filter true,$(PUSH)),--push,) \
+			.; \
 	else \
 		echo "Service $(SERVICE) not found"; exit 1; \
 	fi
@@ -180,9 +205,9 @@ docker-push-one:
 ifndef SERVICE
 	$(error Usage: make docker-push-one SERVICE=app)
 endif
-	@if [ -f services/$(SERVICE)/main.go ]; then \
+	@if [ "$(PUSH)" = "true" ]; then \
 		IMG=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$(SERVICE):$(IMAGE_TAG); \
-		echo "Pushing $$IMG"; \
+		echo "=== Pushing $$IMG ==="; \
 		docker push $$IMG; \
 		if [ "$(BRANCH)" = "main" ]; then \
 			LATEST=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$(SERVICE):latest; \
