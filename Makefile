@@ -40,7 +40,7 @@ help:
 	@echo "Targets:"; \
 	echo "  tidy              - go mod tidy across modules"; \
 	echo "  fmt               - go fmt across modules"; \
-	echo "  lint              - run golangci-lint & go vet"; \
+	echo "  lint              - run golangci-lint"; \
 	echo "  test              - unit tests"; \
 	echo "  cover             - tests with coverage + threshold"; \
 	echo "  build             - build all services"; \
@@ -71,8 +71,6 @@ lint:
 	@for m in $(MODULES); do \
 		echo "→ golangci-lint $$m"; \
 		(cd $$m && golangci-lint run ./...); \
-		echo "→ go vet $$m"; \
-		(cd $$m && go vet ./...); \
 	done
 
 # ---- Tests ----
