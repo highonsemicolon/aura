@@ -27,6 +27,7 @@ jobs:
       go: ${{ steps.goversion.outputs.go }}
       version: ${{ steps.meta.outputs.version }}
       sha: ${{ github.sha }}
+      services: ${{ steps.svcs.outputs.list }}
     steps:
       - uses: actions/checkout@v5
       - id: goversion
@@ -42,6 +43,13 @@ jobs:
         run: |
           DESCRIBE=$(git describe --tags --always --dirty 2>/dev/null || echo 0.1.0)
           echo "version=$DESCRIBE" >> $GITHUB_OUTPUT
+
+      - id: svcs
+        run: |
+          set -euo pipefail
+          # Find all services/* directories, turn into JSON array
+          SVC_LIST=$(ls -d services/* 2>/dev/null | xargs -n1 basename | jq -R -s -c 'split("\n")[:-1]')
+          echo "list=$SVC_LIST" >> $GITHUB_OUTPUT
 
   lint-test:
     runs-on: ubuntu-latest
