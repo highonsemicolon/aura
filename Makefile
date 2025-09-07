@@ -180,7 +180,9 @@ ifndef SERVICE
 	$(error Usage: make docker-build-one SERVICE=app)
 endif
 	@if [ -f services/$(SERVICE)/main.go ]; then \
-		IMG=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$(SERVICE):$(IMAGE_TAG); \
+		IMG_BASE=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$(SERVICE); \
+		IMG_VERSION=$$IMG_BASE:$(IMAGE_TAG); \
+		IMG_LATEST=$$IMG_BASE:latest; \
 		echo "=== Building $(SERVICE) -> $$IMG ==="; \
 		docker buildx build \
 			--platform $(PLATFORMS) \
@@ -189,7 +191,8 @@ endif
 			--build-arg COMMIT=$(COMMIT_HASH) \
 			$(CACHE_FROM) \
     		$(CACHE_TO) \
-			-t $$IMG \
+			-t $$IMG_VERSION \
+			-t $$IMG_LATEST \
 			-f Dockerfile \
 			$(if $(filter true,$(PUSH)),--push,) \
 			.; \
