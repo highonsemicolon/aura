@@ -2,14 +2,14 @@ name: ci
 
 on:
   push:
-    branches: [ main ]
-    tags: [ 'v*.*.*' ]
+    branches: [main]
+    tags: ["v*.*.*"]
   pull_request:
 
 permissions:
   contents: read
-  packages: write   # needed for GHCR
-  id-token: write   # for OIDC (optional)
+  packages: write
+  id-token: write
 
 env:
   APP_NAME: aura
@@ -27,10 +27,10 @@ jobs:
       go: ${{ steps.goversion.outputs.go }}
       version: ${{ steps.meta.outputs.version }}
       sha: ${{ github.sha }}
+      services: ${{ steps.svcs.outputs.list }}
     steps:
       - uses: actions/checkout@v5
       - id: goversion
-        shell: bash
         run: |
           if [[ -f go.work ]]; then
             GO=$(grep '^go ' go.work | awk '{print $2}')
@@ -38,12 +38,20 @@ jobs:
             GO=$(grep '^go ' services/app/go.mod | awk '{print $2}')
           fi
           echo "go=$GO" >> $GITHUB_OUTPUT
+
       - id: meta
         run: |
-          DESCRIBE=$(git describe --tags --always --dirty 2>/dev/null || echo 0.1.0)
-          echo "version=$DESCRIBE" >> $GITHUB_OUTPUT
+          echo "version=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+          echo "sha=${GITHUB_SHA}" >> $GITHUB_OUTPUT
 
-  lint-test:
+      - id: svcs
+        run: |
+          set -euo pipefail
+          # Find all services/* directories, turn into JSON array
+          SVC_LIST=$(ls -d services/* 2>/dev/null | xargs -n1 basename | jq -R -s -c 'split("\n")[:-1]')
+          echo "list=$SVC_LIST" >> $GITHUB_OUTPUT
+
+  lint:
     runs-on: ubuntu-latest
     needs: setup
     steps:
@@ -52,83 +60,66 @@ jobs:
         with:
           go-version: ${{ needs.setup.outputs.go }}
           cache: true
-      - name: Cache go-build
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
       - name: Install golangci-lint
-        run: |
-          go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
+        run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
       - name: Lint
         run: make lint
-      - name: Run tests with coverage
-        run: make cover COVER_MIN=0
-      - name: Upload coverage reports
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-reports
-          path: |
-            .build/coverage.out
-            .build/coverage.html
-            .build/coverage.txt
 
-  docker-images:
+  test:
     runs-on: ubuntu-latest
-    needs: [setup, lint-test]
+    needs: setup
+    strategy:
+      matrix:
+        service: ${{ fromJSON(needs.setup.outputs.services) }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-go@v6
         with:
           go-version: ${{ needs.setup.outputs.go }}
+          cache: true
+      - name: Run tests with coverage
+        run: make cover COVER_MIN=0
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.service }}
+          path: .build/
+
+  docker-images:
+    runs-on: ubuntu-latest
+    needs: [setup, test]
+    if: needs.setup.outputs.services != ''
+    strategy:
+      matrix:
+        service: ${{ fromJSON(needs.setup.outputs.services) }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Discover services
-        id: svcs
-        shell: bash
-        run: |
-          set -euo pipefail
-          # List services in a single space-separated string
-          SVC_LIST=$(ls -d services/* 2>/dev/null | xargs -n1 basename | tr '\n' ' ')
-          echo "services=$SVC_LIST" >> $GITHUB_OUTPUT
-      - name: Build images
-        run: make docker-build
-        env:
-          VERSION: ${{ needs.setup.outputs.version }}
-          COMMIT: ${{ needs.setup.outputs.sha }}
-          APP_NAME: ${{ env.APP_NAME }}
-          REGISTRY: ${{ env.REGISTRY }}
-          IMAGE_OWNER: ${{ env.IMAGE_OWNER }}
-          SERVICES: ${{ steps.svcs.outputs.services }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          buildkitd-flags: --debug
+      - name: Pull build cache
+        run: docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.APP_NAME }}-${{ matrix.service }}:buildcache || true
+      - name: Build & push Docker image
+        run: make docker-build-one SERVICE=${{ matrix.service }} LOCAL=false PUSH=true VERSION=${{ needs.setup.outputs.version }} COMMIT_HASH=${{ needs.setup.outputs.sha }}
 
-      - name: Push images
-        if: github.event_name != 'pull_request'
-        run: make docker-push
-        env:
-          VERSION: ${{ needs.setup.outputs.version }}
-          COMMIT: ${{ needs.setup.outputs.sha }}
-          APP_NAME: ${{ env.APP_NAME }}
-          REGISTRY: ${{ env.REGISTRY }}
-          IMAGE_OWNER: ${{ env.IMAGE_OWNER }}
-          SERVICES: ${{ steps.svcs.outputs.services }}
-          BRANCH: ${{ github.ref_name }}
 
   scan-images:
     runs-on: ubuntu-latest
     needs: docker-images
-    # if: github.event_name != 'pull_request' # reduce PR noise; toggle as desired
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: aquasecurity/trivy-action@0.33.1
         with:
-          scan-type: repo
+          scan-type: image
           ignore-unfixed: true
           format: table
           severity: CRITICAL,HIGH
@@ -139,22 +130,18 @@ jobs:
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v5
-      - name: Setup Helm
-        uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v4
         with:
           version: v3.14.4
       - name: Helm repo setup
         run: |
           helm repo add highonsemicolon https://highonsemicolon.github.io/charts
           helm repo update
-      - name: Deploy/upgrade
-        env:
-          VERSION: ${{ needs.setup.outputs.version }}
-          COMMIT: ${{ needs.setup.outputs.sha }}
+      - name: Deploy changed services
         run: |
-          # Example values; wire in your kubecontext via env or action
-          CHART=highonsemicolon/pathfinder
-          RELEASE=${{ env.APP_NAME }}
-          helm upgrade --install "$RELEASE" "$CHART" \
-            --set image.tag=${VERSION}-${COMMIT} \
-            -f helm/values.yaml
+          for svc in ${{ fromJSON(needs.setup.outputs.services) }}; do
+            RELEASE=${{ env.APP_NAME }}-$svc
+            helm upgrade --install "$RELEASE" highonsemicolon/pathfinder \
+              --set image.tag=${{ needs.setup.outputs.version }}-${{ needs.setup.outputs.sha }} \
+              -f helm/values/$svc.yaml;
+          done

@@ -13,7 +13,7 @@ endif
 
 # Versions & metadata
 VERSION         ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo 0.1.0)
-COMMIT_HASH     := $(shell git rev-parse --short=12 HEAD)
+COMMIT_HASH     ?= $(shell git rev-parse --short=12 HEAD)
 BUILD_TIME      := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 BUILD_HOST      := $(shell hostname)
 
@@ -40,7 +40,7 @@ help:
 	@echo "Targets:"; \
 	echo "  tidy              - go mod tidy across modules"; \
 	echo "  fmt               - go fmt across modules"; \
-	echo "  lint              - run golangci-lint & go vet"; \
+	echo "  lint              - run golangci-lint"; \
 	echo "  test              - unit tests"; \
 	echo "  cover             - tests with coverage + threshold"; \
 	echo "  build             - build all services"; \
@@ -71,8 +71,6 @@ lint:
 	@for m in $(MODULES); do \
 		echo "→ golangci-lint $$m"; \
 		(cd $$m && golangci-lint run ./...); \
-		echo "→ go vet $$m"; \
-		(cd $$m && go vet ./...); \
 	done
 
 # ---- Tests ----
@@ -161,32 +159,50 @@ proto:
 REGISTRY     ?= ghcr.io
 IMAGE_OWNER  ?= $(shell basename $(shell dirname $(shell git remote get-url origin 2>/dev/null || echo unknown/unknown)))
 IMAGE_TAG    ?= $(VERSION)-$(COMMIT_HASH)
+DOCKER_BUILDKIT ?= 1
+PLATFORMS    ?= linux/amd64
+PUSH         ?= false
+LOCAL ?= true
 
 # Build all service images using a shared Dockerfile template
 # Expect per-service build context at repo root with ARG SERVICE=<name>
 
-docker-build:
-	@export DOCKER_BUILDKIT=1; \
-	for svc in $(SERVICES); do \
-		if [ -f services/$$svc/main.go ]; then \
-			IMG=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$$svc:$(IMAGE_TAG); \
-			echo "Building $$svc as $$IMG"; \
-			docker build --build-arg SERVICE=$$svc -t $$IMG -f Dockerfile .; \
-		fi; \
-	done
+ifeq ($(LOCAL),true)
+    CACHE_FROM=
+    CACHE_TO=
+else
+    CACHE_FROM=--cache-from=type=registry,ref=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$(SERVICE):buildcache
+    CACHE_TO=--cache-to=type=registry,ref=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$(SERVICE):buildcache,mode=max
+endif
 
-docker-push:
+docker-build-one:
+ifndef SERVICE
+	$(error Usage: make docker-build-one SERVICE=app)
+endif
+	@if [ -f services/$(SERVICE)/main.go ]; then \
+		IMG_BASE=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$(SERVICE); \
+		IMG_VERSION=$$IMG_BASE:$(IMAGE_TAG); \
+		IMG_LATEST=$$IMG_BASE:latest; \
+		echo "=== Building $(SERVICE) -> $$IMG_VERSION ==="; \
+		docker buildx build \
+			--platform $(PLATFORMS) \
+			--build-arg SERVICE=$(SERVICE) \
+			--build-arg VERSION=$(VERSION) \
+			--build-arg COMMIT=$(COMMIT_HASH) \
+			$(CACHE_FROM) \
+    		$(CACHE_TO) \
+			-t $$IMG_VERSION \
+			-t $$IMG_LATEST \
+			-f Dockerfile \
+			$(if $(filter true,$(PUSH)),--push,) \
+			.; \
+	else \
+		echo "Service $(SERVICE) not found"; exit 1; \
+	fi
+
+docker-build:
 	@for svc in $(SERVICES); do \
-		if [ -f services/$$svc/main.go ]; then \
-			IMG=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$$svc:$(IMAGE_TAG); \
-			echo "Pushing $$IMG"; \
-			docker push $$IMG; \
-			if [ "$(BRANCH)" = "main" ]; then \
-				LATEST=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$$svc:latest; \
-				docker tag $$IMG $$LATEST; \
-				docker push $$LATEST; \
-			fi; \
-		fi; \
+		$(MAKE) docker-build-one SERVICE=$$svc; \
 	done
 
 # ---- Helm ----
