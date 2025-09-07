@@ -183,7 +183,7 @@ endif
 		IMG_BASE=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$(SERVICE); \
 		IMG_VERSION=$$IMG_BASE:$(IMAGE_TAG); \
 		IMG_LATEST=$$IMG_BASE:latest; \
-		echo "=== Building $(SERVICE) -> $$IMG ==="; \
+		echo "=== Building $(SERVICE) -> $$IMG_VERSION ==="; \
 		docker buildx build \
 			--platform $(PLATFORMS) \
 			--build-arg SERVICE=$(SERVICE) \
@@ -200,31 +200,9 @@ endif
 		echo "Service $(SERVICE) not found"; exit 1; \
 	fi
 
-docker-push-one:
-ifndef SERVICE
-	$(error Usage: make docker-push-one SERVICE=app)
-endif
-	@if [ "$(PUSH)" = "true" ]; then \
-		IMG=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$(SERVICE):$(IMAGE_TAG); \
-		echo "=== Pushing $$IMG ==="; \
-		docker push $$IMG; \
-		if [ "$(BRANCH)" = "main" ]; then \
-			LATEST=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$(SERVICE):latest; \
-			docker tag $$IMG $$LATEST; \
-			docker push $$LATEST; \
-		fi; \
-	else \
-		echo "Service $(SERVICE) not found"; exit 1; \
-	fi
-
 docker-build:
 	@for svc in $(SERVICES); do \
 		$(MAKE) docker-build-one SERVICE=$$svc; \
-	done
-
-docker-push:
-	@for svc in $(SERVICES); do \
-		$(MAKE) docker-push-one SERVICE=$$svc; \
 	done
 
 # ---- Helm ----
