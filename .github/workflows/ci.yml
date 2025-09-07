@@ -104,7 +104,8 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           buildkitd-flags: --debug
-
+      - name: Pull build cache
+        run: docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.APP_NAME }}-${{ matrix.service }}:buildcache || true
       - name: Build & push Docker image
         run: |
           make docker-build-one SERVICE=${{ matrix.service }} LOCAL=false PUSH=true
