@@ -160,7 +160,7 @@ REGISTRY     ?= ghcr.io
 IMAGE_OWNER  ?= $(shell basename $(shell dirname $(shell git remote get-url origin 2>/dev/null || echo unknown/unknown)))
 IMAGE_TAG    ?= $(VERSION)-$(COMMIT_HASH)
 DOCKER_BUILDKIT ?= 1
-PLATFORMS    ?= linux/amd64,linux/arm64
+PLATFORMS    ?= linux/amd64
 PUSH         ?= false
 LOCAL ?= true
 
@@ -170,11 +170,9 @@ LOCAL ?= true
 ifeq ($(LOCAL),true)
     CACHE_FROM=
     CACHE_TO=
-	BUILD_PLATFORMS=linux/amd64
 else
     CACHE_FROM=--cache-from=type=registry,ref=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$(SERVICE):buildcache
     CACHE_TO=--cache-to=type=registry,ref=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$(SERVICE):buildcache,mode=max
-	BUILD_PLATFORMS=$(PLATFORMS)
 endif
 
 docker-build-one:
@@ -185,7 +183,7 @@ endif
 		IMG=$(REGISTRY)/$(IMAGE_OWNER)/$(APP_NAME)-$(SERVICE):$(IMAGE_TAG); \
 		echo "=== Building $(SERVICE) -> $$IMG ==="; \
 		docker buildx build \
-			--platform $(BUILD_PLATFORMS) \
+			--platform $(PLATFORMS) \
 			--build-arg SERVICE=$(SERVICE) \
 			--build-arg VERSION=$(VERSION) \
 			--build-arg COMMIT=$(COMMIT_HASH) \
