@@ -41,8 +41,8 @@ jobs:
 
       - id: meta
         run: |
-          DESCRIBE=$(git describe --tags --always --dirty 2>/dev/null || echo 0.1.0)
-          echo "version=$DESCRIBE" >> $GITHUB_OUTPUT
+          echo "version=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+          echo "sha=${GITHUB_SHA}" >> $GITHUB_OUTPUT
 
       - id: svcs
         run: |
