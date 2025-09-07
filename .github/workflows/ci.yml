@@ -109,8 +109,7 @@ jobs:
       - name: Pull build cache
         run: docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.APP_NAME }}-${{ matrix.service }}:buildcache || true
       - name: Build & push Docker image
-        run: |
-          make docker-build-one SERVICE=${{ matrix.service }} LOCAL=false PUSH=true
+        run: make docker-build-one SERVICE=${{ matrix.service }} LOCAL=false PUSH=true VERSION=${{ needs.setup.outputs.version }} COMMIT_HASH=${{ needs.setup.outputs.sha }}
 
 
   scan-images:

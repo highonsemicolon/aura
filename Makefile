@@ -13,7 +13,7 @@ endif
 
 # Versions & metadata
 VERSION         ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo 0.1.0)
-COMMIT_HASH     := $(shell git rev-parse --short=12 HEAD)
+COMMIT_HASH     ?= $(shell git rev-parse --short=12 HEAD)
 BUILD_TIME      := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 BUILD_HOST      := $(shell hostname)
 
