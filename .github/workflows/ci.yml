@@ -94,6 +94,8 @@ jobs:
         service: ${{ fromJSON(needs.setup.outputs.services) }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
