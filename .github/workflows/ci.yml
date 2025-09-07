@@ -87,7 +87,7 @@ jobs:
 
   docker-images:
     runs-on: ubuntu-latest
-    needs: [setup, lint, test]
+    needs: [setup, test]
     if: needs.setup.outputs.services != ''
     strategy:
       matrix:
