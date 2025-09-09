@@ -44,7 +44,9 @@ help:
 	echo "  test              - unit tests"; \
 	echo "  cover             - tests with coverage + threshold"; \
 	echo "  build             - build all services"; \
+	echo "  build-one SERVICE=app - build a single service"; \
 	echo "  run SERVICE=app   - run a single service"; \
+	echo "  dev SERVICE=app   - run a service with hot reload (Air)"; \
 	echo "  proto             - generate protobuf via buf (fallback to protoc)"; \
 	echo "  docker-build      - build docker images for all services"; \
 	echo "  docker-push       - push docker images (requires REGISTRY/IMAGE_OWNER)"; \
@@ -72,6 +74,21 @@ lint:
 		echo "→ golangci-lint $$m"; \
 		(cd $$m && golangci-lint run ./...); \
 	done
+
+# ---- Development ----
+
+AIR_BIN ?= $(GOBIN)/air
+
+$(AIR_BIN):
+	@echo "Installing Air..."
+	@go install github.com/cosmtrek/air@latest
+
+dev: $(AIR_BIN)
+ifndef SERVICE
+	$(error Usage: make dev SERVICE=app)
+endif
+	@SERVICE_NAME=$(SERVICE) $(AIR_BIN) -c .air.toml
+
 
 # ---- Tests ----
 
@@ -114,6 +131,19 @@ test:
 	done
 
 # ---- Build / Run ----
+
+build-one:
+ifndef SERVICE
+	$(error Usage: make build-one SERVICE=app)
+endif
+	@if [ -f services/$(SERVICE)/main.go ]; then \
+		echo "Building $(SERVICE)"; \
+		GOOS=$${GOOS:-$(shell go env GOOS)} \
+		GOARCH=$${GOARCH:-$(shell go env GOARCH)} \
+		go build $(GO_FLAGS) -ldflags "$(LDFLAGS)" -o $(BINARY_DIR)/$(SERVICE) ./services/$(SERVICE); \
+	else \
+		echo "Service $(SERVICE) not found"; exit 1; \
+	fi
 
 build: $(BINARY_DIR)
 	@for svc in $(SERVICES); do \
