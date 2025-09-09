@@ -111,7 +111,6 @@ jobs:
       - name: Build & push Docker image
         run: make docker-build-one SERVICE=${{ matrix.service }} LOCAL=false PUSH=true VERSION=${{ needs.setup.outputs.version }} COMMIT_HASH=${{ needs.setup.outputs.sha }}
 
-
   scan-images:
     runs-on: ubuntu-latest
     needs: [setup, docker-images]
