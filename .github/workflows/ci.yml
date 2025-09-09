@@ -138,13 +138,9 @@ jobs:
           version: v3.14.4
       - name: Helm repo setup
         run: |
-          helm repo add highonsemicolon https://highonsemicolon.github.io/charts
+          helm repo add highonsemicolon https://highonsemicolon.github.io/pathfinder
           helm repo update
-      - name: Deploy changed services
+      - name: Deploy via Makefile
         run: |
-          for svc in ${{ fromJSON(needs.setup.outputs.services) }}; do
-            RELEASE=${{ env.APP_NAME }}-$svc
-            helm upgrade --install "$RELEASE" highonsemicolon/pathfinder \
-              --set image.tag=${{ needs.setup.outputs.version }}-${{ needs.setup.outputs.sha }} \
-              -f helm/values/$svc.yaml;
-          done
+          make helm-deploy IMAGE_TAG=${{ needs.setup.outputs.version }}-${{ needs.setup.outputs.sha }}
+
