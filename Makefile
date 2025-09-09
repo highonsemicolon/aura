@@ -219,6 +219,7 @@ endif
 			--build-arg SERVICE=$(SERVICE) \
 			--build-arg VERSION=$(VERSION) \
 			--build-arg COMMIT=$(COMMIT_HASH) \
+			--build-arg LDFLAGS="$(LDFLAGS)" \
 			$(CACHE_FROM) \
     		$(CACHE_TO) \
 			-t $$IMG_VERSION \
