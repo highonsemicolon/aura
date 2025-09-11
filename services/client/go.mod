@@ -8,7 +8,7 @@ require (
 	github.com/highonsemicolon/aura/pkg/telemetry v0.0.0-20250831154025-5cdd2eae1524
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.63.0
 	go.opentelemetry.io/otel v1.38.0
-	google.golang.org/grpc v1.75.0
+	google.golang.org/grpc v1.75.1
 )
 
 require (
