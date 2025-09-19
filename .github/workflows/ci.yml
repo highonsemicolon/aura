@@ -127,20 +127,19 @@ jobs:
           format: table
           severity: CRITICAL,HIGH
 
-  helm-deploy:
-    runs-on: ubuntu-latest
-    needs: [docker-images, scan-images]
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
-    steps:
-      - uses: actions/checkout@v5
-      - uses: azure/setup-helm@v4
-        with:
-          version: v3.14.4
-      - name: Helm repo setup
-        run: |
-          helm repo add highonsemicolon https://highonsemicolon.github.io/pathfinder
-          helm repo update
-      - name: Deploy via Makefile
-        run: |
-          make helm-deploy IMAGE_TAG=${{ needs.setup.outputs.version }}-${{ needs.setup.outputs.sha }}
-
+  # helm-deploy:
+  #   runs-on: ubuntu-latest
+  #   needs: [docker-images, scan-images]
+  #   if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+  #   steps:
+  #     - uses: actions/checkout@v5
+  #     - uses: azure/setup-helm@v4
+  #       with:
+  #         version: v3.14.4
+  #     - name: Helm repo setup
+  #       run: |
+  #         helm repo add highonsemicolon https://highonsemicolon.github.io/pathfinder
+  #         helm repo update
+  #     - name: Deploy via Makefile
+  #       run: |
+  #         make helm-deploy IMAGE_TAG=${{ needs.setup.outputs.version }}-${{ needs.setup.outputs.sha }}
