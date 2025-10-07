@@ -2,58 +2,23 @@ version: 2
 
 updates:
   - package-ecosystem: "gomod"
-    directory: "/apis/greeter"
+    directories:
+      - "/apis/greeter"
+      - "/pkg/healthz"
+      - "/pkg/logging"
+      - "/pkg/telemetry"
+      - "/services/app"
+      - "/services/client"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     open-pull-requests-limit: 10
     commit-message:
       prefix: "deps"
     rebase-strategy: "auto"
-
-  - package-ecosystem: "gomod"
-    directory: "/pkg/healthz"
-    schedule:
-      interval: "daily"
-    open-pull-requests-limit: 10
-    commit-message:
-      prefix: "deps"
-    rebase-strategy: "auto"
-
-  - package-ecosystem: "gomod"
-    directory: "/pkg/logging"
-    schedule:
-      interval: "daily"
-    open-pull-requests-limit: 10
-    commit-message:
-      prefix: "deps"
-    rebase-strategy: "auto"
-
-  - package-ecosystem: "gomod"
-    directory: "/pkg/telemetry"
-    schedule:
-      interval: "daily"
-    open-pull-requests-limit: 10
-    commit-message:
-      prefix: "deps"
-    rebase-strategy: "auto"
-
-  - package-ecosystem: "gomod"
-    directory: "/services/app"
-    schedule:
-      interval: "daily"
-    open-pull-requests-limit: 10
-    commit-message:
-      prefix: "deps"
-    rebase-strategy: "auto"
-
-  - package-ecosystem: "gomod"
-    directory: "/services/client"
-    schedule:
-      interval: "daily"
-    open-pull-requests-limit: 10
-    commit-message:
-      prefix: "deps"
-    rebase-strategy: "auto"
+    groups:
+      all-go-mods:
+        patterns:
+          - "*"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
