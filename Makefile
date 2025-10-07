@@ -1,10 +1,13 @@
 MAKEFLAGS += --no-print-directory
 
+print-%:
+	@echo '$*=$($*)'
+
 # ==== Project metadata ====
 APP_NAME        ?= aura
 BINARY_DIR      ?= .bin
 BUILD_DIR       ?= .build
-GO_VERSION      ?= 1.25
+GO_VERSION 		?= $(shell if [ -f go.work ]; then grep '^go ' go.work | awk '{print $$2}'; else grep '^go ' services/app/go.mod | awk '{print $$2}'; fi)
 GO_FLAGS        ?= -trimpath -buildvcs=false
 GOBIN           ?= $(shell go env GOBIN)
 ifeq ($(GOBIN),)
@@ -215,6 +218,7 @@ endif
 		IMG_LATEST=$$IMG_BASE:latest; \
 		echo "=== Building $(SERVICE) -> $$IMG_VERSION ==="; \
 		docker buildx build \
+			--build-arg GO_VERSION=$(GO_VERSION) \
 			--platform $(PLATFORMS) \
 			--build-arg SERVICE=$(SERVICE) \
 			--build-arg VERSION=$(VERSION) \
