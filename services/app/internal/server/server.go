@@ -16,8 +16,8 @@ import (
 	"github.com/highonsemicolon/aura/services/app/internal/handler"
 )
 
-func StartGRPCServer(ctx context.Context, cfg *config.Config, healthz *healthz.Healthz, log logging.Logger) error {
-	listener, err := net.Listen("tcp", cfg.GRPC.Address)
+func StartGRPCServer(ctx context.Context, cfg *config.GRPC, healthz *healthz.Healthz, log logging.Logger) error {
+	listener, err := net.Listen("tcp", cfg.Address)
 	if err != nil {
 		return fmt.Errorf("failed to listen: %w", err)
 	}
@@ -35,7 +35,7 @@ func StartGRPCServer(ctx context.Context, cfg *config.Config, healthz *healthz.H
 
 	errCh := make(chan error, 1)
 	go func() {
-		log.InfoF("gRPC server listening on %s", cfg.GRPC.Address)
+		log.InfoF("gRPC server listening on %s", cfg.Address)
 		if serveErr := s.Serve(listener); serveErr != nil {
 			errCh <- serveErr
 		}

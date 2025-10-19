@@ -57,7 +57,7 @@ func run(ctx context.Context) error {
 	healthz.Start(ctx)
 	defer healthz.Stop()
 
-	if err := server.StartGRPCServer(ctx, cfg, healthz, logAdapter); err != nil {
+	if err := server.StartGRPCServer(ctx, &cfg.GRPC, healthz, logAdapter); err != nil {
 		return fmt.Errorf("failed to start gRPC server: %w", err)
 	}
 	return nil

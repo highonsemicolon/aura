@@ -2,12 +2,12 @@ package config
 
 type Config struct {
 	ServiceName string  `koanf:"service_name" validate:"required"`
-	GRPC        gRPC    `koanf:"grpc" validate:"required"`
+	GRPC        GRPC    `koanf:"grpc" validate:"required"`
 	OTEL        OTEL    `koanf:"otel"`
 	Logging     Logging `koanf:"logging"`
 }
 
-type gRPC struct {
+type GRPC struct {
 	Address string `koanf:"address" validate:"required"`
 }
 
