@@ -18,19 +18,24 @@ type zerologAdapter struct {
 	logger *zerolog.Logger
 }
 
-func NewZerologAdapter(format, level string) Logger {
+type LoggingOption struct {
+	Format string
+	Level  string
+}
+
+func NewZerologAdapter(opts LoggingOption) Logger {
 	writer := os.Stdout
-	format = strings.ToLower(format)
-	level = strings.ToLower(level)
+	opts.Format = strings.ToLower(opts.Format)
+	opts.Level = strings.ToLower(opts.Level)
 
 	var logWriter io.Writer
-	if format == "json" {
+	if opts.Format == "json" {
 		logWriter = writer
 	} else {
 		logWriter = zerolog.ConsoleWriter{Out: writer}
 	}
 
-	parsedLevel, err := zerolog.ParseLevel(level)
+	parsedLevel, err := zerolog.ParseLevel(opts.Level)
 	if err != nil {
 		parsedLevel = zerolog.InfoLevel
 	}
@@ -73,7 +78,10 @@ func UnaryServerZerologInterceptor(base Logger) grpc.UnaryServerInterceptor {
 
 type loggerContextKey struct{}
 
-var defaultLogger Logger = NewZerologAdapter("console", "info")
+var defaultLogger Logger = NewZerologAdapter(LoggingOption{
+	Format: "json",
+	Level:  "info",
+})
 
 func contextWithLogger(ctx context.Context, log Logger) context.Context {
 	return context.WithValue(ctx, loggerContextKey{}, log)

@@ -24,18 +24,24 @@ var (
 )
 
 func run(ctx context.Context) error {
-	logger := logging.NewZerologAdapter("json", "info")
+	logAdapter := logging.NewZerologAdapter(logging.LoggingOption{
+		Format: "json",
+		Level:  "info",
+	})
 
 	cfg := &config.Config{}
 	err := c.Load(cfg, c.ConfigLoaderOption{
 		Prefix: "app.",
-		Logger: logger,
+		Logger: logAdapter,
 	})
 	if err != nil {
-		logger.Fatal("failed to load config", err)
+		logAdapter.Fatal("failed to load config", err)
 	}
 
-	logAdapter := logging.NewZerologAdapter(cfg.Logging.Format, cfg.Logging.Level)
+	logAdapter = logging.NewZerologAdapter(logging.LoggingOption{
+		Format: cfg.Logging.Format,
+		Level:  cfg.Logging.Level,
+	})
 
 	logAdapter.Info("starting service:", cfg.ServiceName)
 	logAdapter.Info("version:", Version)
