@@ -2,9 +2,11 @@ go 1.25.0
 
 use (
 	./apis/greeter
+	./pkg/config
 	./pkg/healthz
 	./pkg/logging
 	./pkg/telemetry
+
 	./services/app
 	./services/client
 )

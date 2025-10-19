@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	c "github.com/highonsemicolon/aura/pkg/config"
 	"github.com/highonsemicolon/aura/pkg/healthz"
 	"github.com/highonsemicolon/aura/pkg/logging"
 	"github.com/highonsemicolon/aura/pkg/telemetry"
@@ -23,10 +24,20 @@ var (
 )
 
 func run(ctx context.Context) error {
-	cfg := config.LoadConfig()
+	logger := logging.NewZerologAdapter("json", "info")
+
+	cfg := &config.Config{}
+	err := c.Load(cfg, c.ConfigLoaderOption{
+		Prefix: "app.",
+		Logger: logger,
+	})
+	if err != nil {
+		logger.Fatal("failed to load config", err)
+	}
 
 	logAdapter := logging.NewZerologAdapter(cfg.Logging.Format, cfg.Logging.Level)
 
+	logAdapter.Info("starting service:", cfg.ServiceName)
 	logAdapter.Info("version:", Version)
 	logAdapter.Info("commit:", Commit)
 	logAdapter.Info("build_time:", BuildTime)

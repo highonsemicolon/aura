@@ -90,8 +90,17 @@ func (z *zerologAdapter) Debug(msg ...string) {
 	z.logger.Debug().Msg(strings.Join(msg, " "))
 }
 
-func (z *zerologAdapter) Info(msg ...string) {
-	z.logger.Info().Msg(strings.Join(msg, " "))
+func (z *zerologAdapter) Info(msg string, args ...interface{}) {
+	event := z.logger.Info()
+	for _, a := range args {
+		switch v := a.(type) {
+		case error:
+			event = event.Err(v)
+		default:
+			event = event.Interface("value", v)
+		}
+	}
+	event.Msg(msg)
 }
 
 func (z *zerologAdapter) Warn(msg string, errs ...error) {
@@ -110,13 +119,16 @@ func (z *zerologAdapter) Error(msg string, errs ...error) {
 	events.Msg(msg)
 }
 
-func (z *zerologAdapter) Fatal(msg string, errs ...error) {
+func (z *zerologAdapter) Fatal(msg string, args ...interface{}) {
 	event := z.logger.Fatal()
-
-	if len(errs) > 0 {
-		event = event.Errs("errors", errs)
+	for _, a := range args {
+		switch v := a.(type) {
+		case error:
+			event = event.Err(v)
+		default:
+			event = event.Interface("value", v)
+		}
 	}
-
 	event.Msg(msg)
 }
 

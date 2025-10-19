@@ -4,10 +4,10 @@ import "context"
 
 type Logger interface {
 	Debug(msg ...string)
-	Info(msg ...string)
+	Info(msg string, args ...interface{})
 	Warn(msg string, errs ...error)
 	Error(msg string, errs ...error)
-	Fatal(msg string, errs ...error)
+	Fatal(msg string, errs ...interface{})
 
 	DebugF(format string, args ...any)
 	InfoF(format string, args ...any)
