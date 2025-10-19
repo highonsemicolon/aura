@@ -2,7 +2,6 @@ package telemetry
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"go.opentelemetry.io/otel"
@@ -16,22 +15,33 @@ import (
 
 var tracerProvider *sdktrace.TracerProvider
 
-func InitTracer(ctx context.Context, serviceName, endpoint string) func(context.Context) error {
+type TracerInitOption struct {
+	ServiceName string
+	Endpoint    string
+	Logger      Logger
+}
+
+type Logger interface {
+	Info(msg ...string)
+	Fatal(msg string, errs ...error)
+}
+
+func InitTracer(ctx context.Context, opts TracerInitOption) func(context.Context) error {
 
 	exporter, err := otlptracehttp.New(
 		ctx,
-		otlptracehttp.WithEndpoint(endpoint),
+		otlptracehttp.WithEndpoint(opts.Endpoint),
 		otlptracehttp.WithInsecure(),
 	)
 	if err != nil {
-		log.Fatal("Failed to create trace exporter", err)
+		opts.Logger.Fatal("failed to create trace exporter", err)
 	}
 
 	tp := sdktrace.NewTracerProvider(
 		sdktrace.WithBatcher(exporter),
 		sdktrace.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
-			semconv.ServiceName(serviceName),
+			semconv.ServiceName(opts.ServiceName),
 		)),
 	)
 
@@ -42,7 +52,7 @@ func InitTracer(ctx context.Context, serviceName, endpoint string) func(context.
 		propagation.Baggage{},
 	))
 
-	log.Println("OpenTelemetry tracer initialized")
+	opts.Logger.Info("open telemetry tracer initialized")
 
 	return func(ctx context.Context) error {
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)

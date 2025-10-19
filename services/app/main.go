@@ -43,7 +43,11 @@ func run(ctx context.Context) error {
 	logAdapter.Info("build_time:", BuildTime)
 	logAdapter.Info("built_by:", BuiltBy)
 
-	shutdownTelemetry := telemetry.InitTracer(ctx, cfg.ServiceName, cfg.OTEL.Endpoint)
+	shutdownTelemetry := telemetry.InitTracer(ctx, telemetry.TracerInitOption{
+		ServiceName: cfg.ServiceName,
+		Endpoint:    cfg.OTEL.Endpoint,
+		Logger:      logAdapter,
+	})
 	defer func() {
 		if err := shutdownTelemetry(ctx); err != nil {
 			logAdapter.Error("failed to shutdown telemetry", err)
