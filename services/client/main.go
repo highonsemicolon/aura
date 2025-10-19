@@ -22,8 +22,13 @@ func main() {
 		endpoint = "localhost:4318"
 	}
 	ctx := context.Background()
+	log := logging.FromContext(ctx)
 
-	shutdownTelemetry := telemetry.InitTracer(ctx, "grpc-client-service", endpoint)
+	shutdownTelemetry := telemetry.InitTracer(ctx, telemetry.TracerInitOption{
+		Endpoint:    endpoint,
+		ServiceName: "grpc-client-service",
+		Logger:      log,
+	})
 	defer func() {
 		_ = shutdownTelemetry(ctx)
 	}()
@@ -32,8 +37,6 @@ func main() {
 
 	ctx, span := tracer.Start(ctx, "call-grpc-server")
 	defer span.End()
-
-	log := logging.FromContext(ctx)
 
 	span.SetAttributes(
 		attribute.String("client", "my-grpc-client"),
