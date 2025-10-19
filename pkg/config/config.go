@@ -19,7 +19,7 @@ type Logger interface {
 	Fatal(msg string, errs ...error)
 }
 
-func Load(out interface{}, opts ConfigLoaderOption) error {
+func Load(out any, opts ConfigLoaderOption) error {
 	k := koanf.New(".")
 	prefix := opts.Prefix
 	if prefix == "" {
