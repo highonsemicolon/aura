@@ -3,10 +3,12 @@ package logging
 import (
 	"context"
 	"io"
+	"log"
 	"os"
 	"strings"
 
 	"github.com/rs/zerolog"
+	zlog "github.com/rs/zerolog/log"
 	otelCodes "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
@@ -23,7 +25,28 @@ type LoggingOption struct {
 	Level  string
 }
 
+type errorWriter struct {
+	logger zerolog.Logger
+}
+
+func (w errorWriter) Write(p []byte) (n int, err error) {
+	msg := strings.TrimSpace(string(p))
+	l := w.logger
+	switch {
+	case strings.Contains(strings.ToLower(msg), "error"), strings.Contains(strings.ToLower(msg), "fail"):
+		l.Error().Msg(msg)
+	default:
+		l.Warn().Msg(msg)
+	}
+	return len(p), nil
+}
+
 func NewZerologAdapter(opts LoggingOption) Logger {
+
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	log.SetFlags(0)
+	log.SetOutput(errorWriter{logger: zlog.Logger})
+
 	writer := os.Stdout
 	opts.Format = strings.ToLower(opts.Format)
 	opts.Level = strings.ToLower(opts.Level)
