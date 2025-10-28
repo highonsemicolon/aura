@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/highonsemicolon/aura/apis/greeter v0.0.0-20250831154025-5cdd2eae1524
+	github.com/highonsemicolon/aura/pkg/config v0.0.0-20251023045624-1468ddf11295
 	github.com/highonsemicolon/aura/pkg/healthz v0.0.0-20250831154025-5cdd2eae1524
 	github.com/highonsemicolon/aura/pkg/logging v0.0.0-20250831154025-5cdd2eae1524
 	github.com/highonsemicolon/aura/pkg/telemetry v0.0.0-20250831154025-5cdd2eae1524
@@ -32,6 +33,15 @@ require (
 )
 
 require (
+	github.com/go-playground/locales v0.14.1 // indirect
+	github.com/go-playground/universal-translator v0.18.1 // indirect
+	github.com/go-playground/validator v9.31.0+incompatible // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
+	github.com/knadh/koanf v1.5.0 // indirect
+	github.com/leodido/go-urn v1.4.0 // indirect
+	github.com/mitchellh/copystructure v1.2.0 // indirect
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/text v0.28.0 // indirect

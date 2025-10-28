@@ -10,17 +10,28 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 
 	pb "github.com/highonsemicolon/aura/apis/greeter/gen"
+	"github.com/highonsemicolon/aura/pkg/db"
 	"github.com/highonsemicolon/aura/pkg/healthz"
 	"github.com/highonsemicolon/aura/pkg/logging"
 	"github.com/highonsemicolon/aura/services/app/internal/config"
 	"github.com/highonsemicolon/aura/services/app/internal/handler"
 )
 
-func StartGRPCServer(ctx context.Context, cfg *config.GRPC, healthz *healthz.Healthz, log logging.Logger) error {
-	listener, err := net.Listen("tcp", cfg.Address)
+func StartGRPCServer(ctx context.Context, cfg *config.Config, healthz *healthz.Healthz, log logging.Logger) error {
+	listener, err := net.Listen("tcp", cfg.GRPC.Address)
 	if err != nil {
 		return fmt.Errorf("failed to listen: %w", err)
 	}
+
+	mongoClient, err := db.NewMongoClient(ctx, cfg.MongoDB.URI)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := mongoClient.Disconnect(ctx); err != nil {
+			log.Error("failed to disconnect from MongoDB", err)
+		}
+	}()
 
 	s := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
@@ -35,7 +46,7 @@ func StartGRPCServer(ctx context.Context, cfg *config.GRPC, healthz *healthz.Hea
 
 	errCh := make(chan error, 1)
 	go func() {
-		log.InfoF("gRPC server listening on %s", cfg.Address)
+		log.InfoF("gRPC server listening on %s", cfg.GRPC.Address)
 		if serveErr := s.Serve(listener); serveErr != nil {
 			errCh <- serveErr
 		}

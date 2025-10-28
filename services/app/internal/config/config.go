@@ -5,6 +5,7 @@ type Config struct {
 	GRPC        GRPC    `koanf:"grpc" validate:"required"`
 	OTEL        OTEL    `koanf:"otel"`
 	Logging     Logging `koanf:"logging"`
+	MongoDB     MongoDB `koanf:"mongodb" validate:"required"`
 }
 
 type GRPC struct {
@@ -18,4 +19,9 @@ type Logging struct {
 
 type OTEL struct {
 	Endpoint string `koanf:"endpoint" validate:"required"`
+}
+
+type MongoDB struct {
+	URI string `koanf:"uri" validate:"required,url"`
+	DatabaseName string `koanf:"database_name" validate:"required"`
 }
