@@ -24,12 +24,7 @@ func StartGRPCServer(ctx context.Context, cfg *config.Config, healthz *healthz.H
 		return fmt.Errorf("failed to listen: %w", err)
 	}
 
-	dbs := map[string]string{
-		"users":     cfg.MongoDB.UserDB,
-		"orders":    cfg.MongoDB.OrderDB,
-		"analytics": cfg.MongoDB.AnalyticsDB,
-	}
-	registry, mongoClient, err := db.InitMongoRegistry(ctx, cfg.MongoDB.URI, dbs)
+	registry, mongoClient, err := db.InitMongoRegistry(ctx, cfg.MongoDB.URI, cfg.MongoDB.Databases())
 	if err != nil {
 		return err
 	}

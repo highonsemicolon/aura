@@ -20,10 +20,3 @@ type Logging struct {
 type OTEL struct {
 	Endpoint string `koanf:"endpoint" validate:"required"`
 }
-
-type MongoDB struct {
-	URI         string `koanf:"uri" validate:"required,url"`
-	UserDB      string `koanf:"user_db" validate:"required"`
-	OrderDB     string `koanf:"order_db" validate:"required"`
-	AnalyticsDB string `koanf:"analytics_db" validate:"required"`
-}
