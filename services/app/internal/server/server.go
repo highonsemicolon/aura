@@ -44,6 +44,8 @@ func StartGRPCServer(ctx context.Context, cfg *config.Config, healthz *healthz.H
 	}()
 
 	_ = registry
+	// orderRepo := mongo.NewOrderRepository(registry[config.DBOrders])
+	// orderRepo.CreateOrder(ctx, "abc", 100.0)
 
 	s := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
