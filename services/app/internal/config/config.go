@@ -22,6 +22,8 @@ type OTEL struct {
 }
 
 type MongoDB struct {
-	URI string `koanf:"uri" validate:"required,url"`
-	DatabaseName string `koanf:"database_name" validate:"required"`
+	URI         string `koanf:"uri" validate:"required,url"`
+	UserDB      string `koanf:"user_db" validate:"required"`
+	OrderDB     string `koanf:"order_db" validate:"required"`
+	AnalyticsDB string `koanf:"analytics_db" validate:"required"`
 }

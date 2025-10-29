@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"time"
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
@@ -23,15 +24,26 @@ func StartGRPCServer(ctx context.Context, cfg *config.Config, healthz *healthz.H
 		return fmt.Errorf("failed to listen: %w", err)
 	}
 
-	mongoClient, err := db.NewMongoClient(ctx, cfg.MongoDB.URI)
+	dbs := map[string]string{
+		"users":     cfg.MongoDB.UserDB,
+		"orders":    cfg.MongoDB.OrderDB,
+		"analytics": cfg.MongoDB.AnalyticsDB,
+	}
+	registry, mongoClient, err := db.InitMongoRegistry(ctx, cfg.MongoDB.URI, dbs)
 	if err != nil {
 		return err
 	}
-	defer func() {
-		if err := mongoClient.Disconnect(ctx); err != nil {
-			log.Error("failed to disconnect from MongoDB", err)
+	defer func() error {
+		shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+		if err := mongoClient.Disconnect(shutdownCtx); err != nil {
+			return fmt.Errorf("failed to disconnect mongo client: %w", err)
+		} else {
+			return nil
 		}
 	}()
+
+	_ = registry
 
 	s := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
