@@ -13,7 +13,7 @@
       "type": "go",
       "request": "launch",
       "mode": "auto",
-      "program": "${workspaceFolder}/services/app/main.go",
+      "program": "${workspaceFolder}/services/app/",
       "env": { "PATH": "${env:PATH}" },
       "cwd": "${workspaceFolder}",
       "args": [],
