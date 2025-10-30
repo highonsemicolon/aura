@@ -4,43 +4,31 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"time"
-
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/health/grpc_health_v1"
 
 	pb "github.com/highonsemicolon/aura/apis/greeter/gen"
-	"github.com/highonsemicolon/aura/pkg/db"
+
 	"github.com/highonsemicolon/aura/pkg/healthz"
 	"github.com/highonsemicolon/aura/pkg/logging"
 	"github.com/highonsemicolon/aura/services/app/internal/config"
 	"github.com/highonsemicolon/aura/services/app/internal/handler"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
-func StartGRPCServer(ctx context.Context, cfg *config.Config, healthz *healthz.Healthz, log logging.Logger) error {
+type Server struct {
+	cfg      *config.Config
+	grpcSrv  *grpc.Server
+	listener net.Listener
+	log      logging.Logger
+	healthz  *healthz.Healthz
+}
+
+func New(cfg *config.Config, healthz *healthz.Healthz, log logging.Logger) (*Server, error) {
 	listener, err := net.Listen("tcp", cfg.GRPC.Address)
 	if err != nil {
-		return fmt.Errorf("failed to listen: %w", err)
+		return nil, fmt.Errorf("failed to listen on %s: %w", cfg.GRPC.Address, err)
 	}
-
-	registry, mongoClient, err := db.InitMongoRegistry(ctx, cfg.MongoDB.URI, cfg.MongoDB.Databases())
-	if err != nil {
-		return err
-	}
-	defer func() error {
-		shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-		defer cancel()
-		if err := mongoClient.Disconnect(shutdownCtx); err != nil {
-			return fmt.Errorf("failed to disconnect mongo client: %w", err)
-		} else {
-			return nil
-		}
-	}()
-
-	_ = registry
-	// orderRepo := mongo.NewOrderRepository(registry[config.DBOrders])
-	// orderRepo.CreateOrder(ctx, "abc", 100.0)
 
 	s := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
@@ -53,22 +41,38 @@ func StartGRPCServer(ctx context.Context, cfg *config.Config, healthz *healthz.H
 
 	grpc_health_v1.RegisterHealthServer(s, healthz.Server())
 
+	return &Server{
+		cfg:      cfg,
+		grpcSrv:  s,
+		listener: listener,
+		log:      log,
+		healthz:  healthz,
+	}, nil
+}
+
+func (srv *Server) Start(ctx context.Context) error {
 	errCh := make(chan error, 1)
+
 	go func() {
-		log.InfoF("gRPC server listening on %s", cfg.GRPC.Address)
-		if serveErr := s.Serve(listener); serveErr != nil {
-			errCh <- serveErr
+		srv.log.InfoF("gRPC server listening on %s", srv.cfg.GRPC.Address)
+		if err := srv.grpcSrv.Serve(srv.listener); err != nil {
+			errCh <- fmt.Errorf("gRPC server error: %w", err)
 		}
 	}()
 
 	select {
 	case <-ctx.Done():
-		log.Info("context cancelled, shutting down gRPC server")
-		s.GracefulStop()
-	case serveErr := <-errCh:
-		return fmt.Errorf("gRPC server error: %w", serveErr)
+		srv.log.Info("context cancelled, initiating graceful gRPC shutdown...")
+		srv.healthz.SetAllNotServing()
+		srv.grpcSrv.GracefulStop()
+		return nil
+	case err := <-errCh:
+		return err
 	}
+}
 
-	log.Info("gRPC server stopped gracefully")
-	return nil
+func (srv *Server) Stop() {
+	srv.log.Info("stopping gRPC server")
+	srv.healthz.SetAllNotServing()
+	srv.grpcSrv.GracefulStop()
 }
