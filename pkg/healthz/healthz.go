@@ -27,47 +27,46 @@ func NewHealthz(interval time.Duration) *Healthz {
 	}
 }
 
-func (hm *Healthz) Server() *health.Server {
-	return hm.server
+func (h *Healthz) Server() *health.Server {
+	return h.server
 }
 
-func (hm *Healthz) RegisterLiveness(service string) {
-	hm.liveness[service] = struct{}{}
-	hm.server.SetServingStatus(service, grpc_health_v1.HealthCheckResponse_SERVING)
+func (h *Healthz) RegisterLiveness(svc string) {
+	h.liveness[svc] = struct{}{}
+	h.server.SetServingStatus(svc, grpc_health_v1.HealthCheckResponse_SERVING)
 }
 
-func (hm *Healthz) RegisterReadiness(service string, checks ...Checker) {
-	hm.readiness[service] = checks
-	hm.server.SetServingStatus(service, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+func (h *Healthz) RegisterReadiness(svc string, checks ...Checker) {
+	h.readiness[svc] = checks
+	h.server.SetServingStatus(svc, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 }
 
-func (hm *Healthz) Start(ctx context.Context) {
+func (h *Healthz) AddDynamicCheck(svc string, check Checker) {
+	h.readiness[svc] = append(h.readiness[svc], check)
+}
+
+func (h *Healthz) Start(ctx context.Context) {
 	ctx, cancel := context.WithCancel(ctx)
-	hm.cancelFunc = cancel
+	h.cancelFunc = cancel
 
 	go func() {
-		ticker := time.NewTicker(hm.interval)
+		ticker := time.NewTicker(h.interval)
 		defer ticker.Stop()
 
 		for {
 			select {
 			case <-ctx.Done():
-				for svc := range hm.liveness {
-					hm.server.SetServingStatus(svc, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
-				}
-				for svc := range hm.readiness {
-					hm.server.SetServingStatus(svc, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
-				}
+				h.SetAllNotServing()
 				return
 			case <-ticker.C:
-				hm.evaluateReadiness(ctx)
+				h.evaluateReadiness(ctx)
 			}
 		}
 	}()
 }
 
-func (hm *Healthz) evaluateReadiness(ctx context.Context) {
-	for svc, checks := range hm.readiness {
+func (h *Healthz) evaluateReadiness(ctx context.Context) {
+	for svc, checks := range h.readiness {
 		ready := true
 		for _, check := range checks {
 			if !check(ctx) {
@@ -76,21 +75,25 @@ func (hm *Healthz) evaluateReadiness(ctx context.Context) {
 			}
 		}
 		if ready {
-			hm.server.SetServingStatus(svc, grpc_health_v1.HealthCheckResponse_SERVING)
+			h.server.SetServingStatus(svc, grpc_health_v1.HealthCheckResponse_SERVING)
 		} else {
-			hm.server.SetServingStatus(svc, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+			h.server.SetServingStatus(svc, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 		}
 	}
 }
 
-func (hm *Healthz) Stop() {
-	if hm.cancelFunc != nil {
-		hm.cancelFunc()
+func (h *Healthz) Stop() {
+	if h.cancelFunc != nil {
+		h.cancelFunc()
 	}
-	for svc := range hm.liveness {
-		hm.server.SetServingStatus(svc, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+	h.SetAllNotServing()
+}
+
+func (h *Healthz) SetAllNotServing() {
+	for svc := range h.liveness {
+		h.server.SetServingStatus(svc, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 	}
-	for svc := range hm.readiness {
-		hm.server.SetServingStatus(svc, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+	for svc := range h.readiness {
+		h.server.SetServingStatus(svc, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 	}
 }
