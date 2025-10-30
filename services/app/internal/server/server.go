@@ -72,7 +72,6 @@ func (srv *Server) Start(ctx context.Context) error {
 }
 
 func (srv *Server) Stop() {
-	srv.log.Info("stopping gRPC server")
 	srv.healthz.SetAllNotServing()
 	srv.grpcSrv.GracefulStop()
 }

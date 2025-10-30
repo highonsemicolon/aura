@@ -18,7 +18,12 @@ type AppService struct {
 	cfg         *config.Config
 	log         logging.Logger
 	healthz     *healthz.Healthz
-	shutdownFns []func(context.Context) error
+	shutdownFns []ShutdownFn
+}
+
+type ShutdownFn struct {
+	Name string
+	Fn   func(ctx context.Context) error
 }
 
 func NewAppService(cfg *config.Config, log logging.Logger) *AppService {
@@ -38,13 +43,23 @@ func (s *AppService) Start(ctx context.Context) error {
 		Endpoint:    s.cfg.OTEL.Endpoint,
 		Logger:      s.log,
 	})
-	s.shutdownFns = append(s.shutdownFns, shutdownTelemetry)
+	s.shutdownFns = append(s.shutdownFns, ShutdownFn{
+		Name: "Telemetry",
+		Fn: func(ctx context.Context) error {
+			return shutdownTelemetry(ctx)
+		},
+	})
 
 	registry, mongoClient, err := db.InitMongoRegistry(ctx, s.cfg.MongoDB.URI, s.cfg.MongoDB.Databases())
 	if err != nil {
 		return fmt.Errorf("failed to connect db: %w", err)
 	}
-	s.shutdownFns = append(s.shutdownFns, mongoClient.Disconnect)
+	s.shutdownFns = append(s.shutdownFns, ShutdownFn{
+		Name: "MongoDB Client",
+		Fn: func(ctx context.Context) error {
+			return mongoClient.Disconnect(ctx)
+		},
+	})
 
 	s.healthz = healthz.NewHealthz(5 * time.Second)
 	s.healthz.RegisterLiveness("liveness")
@@ -59,10 +74,14 @@ func (s *AppService) Start(ctx context.Context) error {
 		return err
 	}
 
-	s.shutdownFns = append(s.shutdownFns, func(ctx context.Context) error {
-		srv.Stop()
-		return nil
-	})
+	s.shutdownFns = append(s.shutdownFns, 
+		ShutdownFn{
+			Name: "gRPC Server",
+			Fn: func(ctx context.Context) error {
+				srv.Stop()
+				return nil
+			},
+		})
 
 	go func() {
 		if err := srv.Start(ctx); err != nil {
@@ -92,8 +111,12 @@ func (svc *AppService) Shutdown(ctx context.Context) error {
 
 	// run shutdowns in LIFO order
 	for i := len(svc.shutdownFns) - 1; i >= 0; i-- {
-		if err := svc.shutdownFns[i](ctx); err != nil {
-			svc.log.Error("shutdown error", err)
+		step := svc.shutdownFns[i]
+		svc.log.InfoF("%s: shutting down", step.Name)
+		if err := step.Fn(ctx); err != nil {
+			svc.log.ErrorF("error while shutting down %s: %v", step.Name, err)
+		} else {
+			svc.log.InfoF("%s: shut down successfully", step.Name)
 		}
 	}
 
