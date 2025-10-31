@@ -11,7 +11,8 @@ import (
 	"github.com/highonsemicolon/aura/pkg/telemetry"
 	"github.com/highonsemicolon/aura/services/app/internal/config"
 	"github.com/highonsemicolon/aura/services/app/internal/server"
-	"go.mongodb.org/mongo-driver/mongo"
+
+	mongox "go.mongodb.org/mongo-driver/mongo"
 )
 
 type AppService struct {
@@ -68,13 +69,15 @@ func (s *AppService) Start(ctx context.Context) error {
 	s.healthz.Start(ctx)
 
 	_ = registry
+	// order_repo := mongo.NewOrderRepository(registry[config.DBOrders])
+	// order_repo.CreateOrder(ctx, "order123", 99.99)
 
 	srv, err := server.New(s.cfg, s.healthz, s.log)
 	if err != nil {
 		return err
 	}
 
-	s.shutdownFns = append(s.shutdownFns, 
+	s.shutdownFns = append(s.shutdownFns,
 		ShutdownFn{
 			Name: "gRPC Server",
 			Fn: func(ctx context.Context) error {
@@ -92,7 +95,7 @@ func (s *AppService) Start(ctx context.Context) error {
 	return nil
 }
 
-func checkDBConnection(mongoClient *mongo.Client) healthz.Checker {
+func checkDBConnection(mongoClient *mongox.Client) healthz.Checker {
 	return func(ctx context.Context) bool {
 		_, cancel := context.WithTimeout(ctx, 1*time.Second)
 		defer cancel()

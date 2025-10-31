@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 	"time"
 
@@ -27,6 +28,12 @@ func main() {
 		Format: "json",
 		Level:  "info",
 	})
+
+	defer func() {
+		if r := recover(); r != nil {
+			log.FatalF("unhandled panic: %v\n%s", r, debug.Stack())
+		}
+	}()
 
 	cfg := &config.Config{}
 	err := c.Load(cfg, c.ConfigLoaderOption{
