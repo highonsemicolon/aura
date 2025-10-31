@@ -33,3 +33,11 @@ func InitMongoRegistry(ctx context.Context, uri string, dbs map[string]string) (
 
 	return registry, client, nil
 }
+
+func CheckMongoConnection(client *mongo.Client) func(ctx context.Context) bool {
+	return func(ctx context.Context) bool {
+		pingCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
+		defer cancel()
+		return client.Ping(pingCtx, nil) == nil
+	}
+}
