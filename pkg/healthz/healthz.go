@@ -82,11 +82,12 @@ func (h *Healthz) evaluateReadiness(ctx context.Context) {
 	}
 }
 
-func (h *Healthz) Stop() {
+func (h *Healthz) Stop(ctx context.Context) error {
 	if h.cancelFunc != nil {
 		h.cancelFunc()
 	}
 	h.SetAllNotServing()
+	return nil
 }
 
 func (h *Healthz) SetAllNotServing() {

@@ -51,10 +51,7 @@ func (s *AppService) Start(ctx context.Context) error {
 	s.healthz.RegisterReadiness("greeter", db.CheckMongoConnection(mongoClient))
 	s.healthz.RegisterReadiness("thanker")
 	s.healthz.Start(ctx)
-	s.lifecycle.Add("Healthz", func(ctx context.Context) error {
-		s.healthz.Stop()
-		return nil
-	})
+	s.lifecycle.Add("Healthz", s.healthz.Stop)
 
 	srv, err := server.New(s.cfg, s.healthz, s.log)
 	if err != nil {
