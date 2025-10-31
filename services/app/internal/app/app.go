@@ -57,10 +57,7 @@ func (s *AppService) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	s.lifecycle.Add("gRPC Server", func(ctx context.Context) error {
-		srv.Stop()
-		return nil
-	})
+	s.lifecycle.Add("gRPC Server", srv.Stop)
 
 	go func() {
 		if err := srv.Start(ctx); err != nil {

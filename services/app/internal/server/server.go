@@ -71,7 +71,23 @@ func (srv *Server) Start(ctx context.Context) error {
 	}
 }
 
-func (srv *Server) Stop() {
+func (srv *Server) Stop(ctx context.Context) error {
+	srv.log.Info("stopping gRPC server...")
 	srv.healthz.SetAllNotServing()
-	srv.grpcSrv.GracefulStop()
+
+	done := make(chan struct{})
+	go func() {
+		srv.grpcSrv.GracefulStop()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		srv.log.Info("gRPC server stopped gracefully")
+		return nil
+	case <-ctx.Done():
+		srv.log.Warn("gRPC shutdown timed out; forcing stop")
+		srv.grpcSrv.Stop()
+		return ctx.Err()
+	}
 }
