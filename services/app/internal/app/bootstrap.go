@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"runtime/debug"
@@ -13,7 +14,7 @@ import (
 	"github.com/highonsemicolon/aura/services/app/internal/config"
 )
 
-func RunApp(version, commit, buildTime, builtBy string) {
+func RunApp(version, commit, buildTime, builtBy string) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -36,12 +37,12 @@ func RunApp(version, commit, buildTime, builtBy string) {
 		Prefix: "app.",
 		Logger: log,
 	}); err != nil {
-		log.Fatal("failed to load config", err)
+		return fmt.Errorf("failed to load config: %w", err)
 	}
 
 	svc := New(cfg, log)
 	if err := svc.Start(ctx); err != nil {
-		log.Fatal("failed to start service", err)
+		return fmt.Errorf("failed to start service: %w", err)
 	}
 
 	<-ctx.Done()
@@ -51,8 +52,10 @@ func RunApp(version, commit, buildTime, builtBy string) {
 	defer cancel()
 
 	if err := svc.Shutdown(shutdownCtx); err != nil {
-		log.Error("graceful shutdown failed", err)
+		return fmt.Errorf("graceful shutdown failed: %w", err)
 	} else {
 		log.Info("service stopped gracefully")
 	}
+
+	return nil
 }
