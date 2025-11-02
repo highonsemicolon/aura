@@ -4,7 +4,7 @@ import (
 	"context"
 	"os"
 
-	pb "github.com/highonsemicolon/aura/apis/greeter/gen"
+	"github.com/highonsemicolon/aura/apis/gen/greeter"
 	"github.com/highonsemicolon/aura/pkg/logging"
 	"github.com/highonsemicolon/aura/pkg/telemetry"
 
@@ -60,9 +60,9 @@ func main() {
 		}
 	}()
 
-	client := pb.NewGreeterClient(conn)
+	client := greeter.NewGreeterClient(conn)
 
-	resp, err := client.SayHello(ctx, &pb.HelloRequest{Name: "Aura"})
+	resp, err := client.SayHello(ctx, &greeter.HelloRequest{Name: "Aura"})
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("grpc_error", err.Error()))

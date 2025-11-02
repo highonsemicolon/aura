@@ -5,21 +5,21 @@ import (
 	"fmt"
 	"time"
 
-	pb "github.com/highonsemicolon/aura/apis/greeter/gen"
+	"github.com/highonsemicolon/aura/apis/gen/greeter"
 	"github.com/highonsemicolon/aura/pkg/logging"
 	"github.com/highonsemicolon/aura/pkg/telemetry"
 	"go.opentelemetry.io/otel/attribute"
 )
 
 type GreeterHandler struct {
-	pb.UnimplementedGreeterServer
+	greeter.UnimplementedGreeterServer
 }
 
 func NewGreeterHandler() *GreeterHandler {
 	return &GreeterHandler{}
 }
 
-func (s *GreeterHandler) SayHello(ctx context.Context, req *pb.HelloRequest) (*pb.HelloResponse, error) {
+func (s *GreeterHandler) SayHello(ctx context.Context, req *greeter.HelloRequest) (*greeter.HelloResponse, error) {
 	log := logging.FromContext(ctx)
 
 	tracer := telemetry.Tracer("github.com/highonsemicolon/aura/cmd/grpc")
@@ -36,5 +36,5 @@ func (s *GreeterHandler) SayHello(ctx context.Context, req *pb.HelloRequest) (*p
 	log.InfoF("Received SayHello request for %s", req.Name)
 
 	message := fmt.Sprintf("Hello, %s!", req.Name)
-	return &pb.HelloResponse{Message: message}, nil
+	return &greeter.HelloResponse{Message: message}, nil
 }

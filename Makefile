@@ -176,16 +176,7 @@ clean:
 
 proto:
 	@echo "Generating protobuf with protoc"; \
-	for d in $(PROTO_DIRS); do \
-		service_dir=$$(dirname $$d); \
-		mkdir -p $$service_dir/gen; \
-		protoc -I $$d \
-			--plugin=protoc-gen-go=$(PROTOC_GEN_GO) \
-			--plugin=protoc-gen-go-grpc=$(PROTOC_GEN_GRPC) \
-			--go_out=$$service_dir/gen --go_opt=paths=source_relative \
-			--go-grpc_out=$$service_dir/gen --go-grpc_opt=paths=source_relative \
-			$$d/*.proto; \
-	done; \
+	buf generate
 
 # ---- Docker ----
 

@@ -1,4 +1,4 @@
-module github.com/highonsemicolon/aura/apis/greeter
+module github.com/highonsemicolon/aura/apis
 
 go 1.25.0
 
