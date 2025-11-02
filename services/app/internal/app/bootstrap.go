@@ -22,10 +22,7 @@ func RunApp(version, commit, buildTime, builtBy string) {
 		Level:  "info",
 	})
 
-	log.Info("version:", version)
-	log.Info("commit:", commit)
-	log.Info("build_time:", buildTime)
-	log.Info("built_by:", builtBy)
+	log.InfoF("version=%s commit=%s buildTime=%s builtBy=%s", version, commit, buildTime, builtBy)
 
 	defer func() {
 		if r := recover(); r != nil {
