@@ -3,9 +3,9 @@ module github.com/highonsemicolon/aura/services/client
 go 1.25.0
 
 require (
-	github.com/highonsemicolon/aura/apis/greeter v0.0.0-20250831154025-5cdd2eae1524
-	github.com/highonsemicolon/aura/pkg/logging v0.0.0-20250831154025-5cdd2eae1524
-	github.com/highonsemicolon/aura/pkg/telemetry v0.0.0-20250831154025-5cdd2eae1524
+	github.com/highonsemicolon/aura/apis/greeter v0.0.0-20251031054639-839943440ba3
+	github.com/highonsemicolon/aura/pkg/logging v0.0.0-20251031054639-839943440ba3
+	github.com/highonsemicolon/aura/pkg/telemetry v0.0.0-20251031054639-839943440ba3
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.63.0
 	go.opentelemetry.io/otel v1.38.0
 	google.golang.org/grpc v1.76.0

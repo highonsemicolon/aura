@@ -2,7 +2,7 @@ go 1.25.0
 
 use (
 	./apis/greeter
-	./pkg/config
+	./pkg/configloader
 	./pkg/db
 	./pkg/healthz
 	./pkg/logging

@@ -1,4 +1,4 @@
-module github.com/highonsemicolon/aura/pkg/config
+module github.com/highonsemicolon/aura/pkg/configloader
 
 go 1.25.0
 

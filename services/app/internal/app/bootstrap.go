@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	c "github.com/highonsemicolon/aura/pkg/config"
+	"github.com/highonsemicolon/aura/pkg/configloader"
 	"github.com/highonsemicolon/aura/pkg/logging"
 	"github.com/highonsemicolon/aura/services/app/internal/config"
 )
@@ -35,7 +35,7 @@ func RunApp(version, commit, buildTime, builtBy string) {
 
 	// Load configuration
 	cfg := &config.Config{}
-	if err := c.Load(cfg, c.ConfigLoaderOption{
+	if err := configloader.Load(cfg, configloader.ConfigLoaderOption{
 		Prefix: "app.",
 		Logger: log,
 	}); err != nil {
