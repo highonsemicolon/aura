@@ -99,8 +99,8 @@ jobs:
         with:
           go-version: ${{ needs.setup.outputs.go }}
           cache: true
-      - name: Run tests with coverage
-        run: make cover COVER_MIN=0
+      - name: Run tests with coverage for one service
+        run: make cover-one SERVICE=${{ matrix.service }} COVER_MIN=0
       - name: Upload coverage
         uses: actions/upload-artifact@v5
         with:

@@ -98,38 +98,29 @@ COVER_MIN     ?= 00
 $(BUILD_DIR):
 	@mkdir -p $(BUILD_DIR)
 
-cover: $(BUILD_DIR)
-	@rm -f $(COVER_PROFILE)
-	@for m in $(MODULES); do \
-		echo "→ Testing $$m"; \
-		MOD_NAME=$$(basename $$m); \
-		COVER_FILE=$(BUILD_DIR)/$$MOD_NAME.cover.out; \
-		go test -coverprofile=$$COVER_FILE -covermode=atomic -race $$m/... || exit 1; \
-		if [ -f $$COVER_FILE ]; then \
-			if [ ! -f $(COVER_PROFILE) ]; then \
-				cp $$COVER_FILE $(COVER_PROFILE); \
-			else \
-				tail -n +2 $$COVER_FILE >> $(COVER_PROFILE); \
-			fi \
-		fi; \
-	done
-	@go tool cover -func=$(COVER_PROFILE) | tee $(BUILD_DIR)/coverage.txt
-	@TOTAL=$$(go tool cover -func=$(COVER_PROFILE) | tail -n 1 | awk '{print $$3}' | sed 's/%//'); \
-	if [ $${TOTAL%.*} -lt $(COVER_MIN) ]; then \
-		echo "\nCoverage $$TOTAL% is below threshold $(COVER_MIN)%"; exit 1; \
+test-one:
+ifndef SERVICE
+	$(error Usage: make test-one SERVICE=app)
+endif
+	@echo "→ Running tests for $(SERVICE)"
+	@if [ -d services/$(SERVICE) ]; then \
+		go test -race -v ./services/$(SERVICE)/...; \
+	else \
+		echo "Service $(SERVICE) not found"; exit 1; \
 	fi
-	@go tool cover -html=$(COVER_PROFILE) -o $(COVER_HTML)
-	@echo "Coverage OK (>= $(COVER_MIN)%)"
 
-
-# Simple multi-module test target
-test:
-	@for m in $(MODULES); do \
-		echo "→ Running tests for $$m"; \
-		go test -race -v $$m/... || exit 1; \
-	done
-
-# ---- Build / Run ----
+cover-one: $(BUILD_DIR)
+ifndef SERVICE
+	$(error Usage: make cover-one SERVICE=app)
+endif
+	@echo "→ Running coverage for $(SERVICE)"
+	@if [ -d services/$(SERVICE) ]; then \
+		COVER_FILE=$(BUILD_DIR)/$(SERVICE).cover.out; \
+		go test -coverprofile=$$COVER_FILE -covermode=atomic -race ./services/$(SERVICE)/...; \
+		go tool cover -func=$$COVER_FILE | tee $(BUILD_DIR)/$(SERVICE).coverage.txt; \
+	else \
+		echo "Service $(SERVICE) not found"; exit 1; \
+	fi
 
 build-one:
 ifndef SERVICE
