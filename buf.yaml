@@ -3,7 +3,7 @@ modules:
   - path: apis
 lint:
   use:
-    - DEFAULT
+    - STANDARD
 breaking:
   use:
     - FILE
