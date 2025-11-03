@@ -33,10 +33,6 @@ LDFLAGS         := -X 'main.Version=$(VERSION)' \
                    -X 'main.BuildTime=$(BUILD_TIME)' \
                    -X 'main.BuiltBy=$(BUILD_HOST)'
 
-PROTO_DIRS      := $(shell find apis -type d -name proto 2>/dev/null)
-PROTOC_GEN_GO    = $(GOBIN)/protoc-gen-go
-PROTOC_GEN_GRPC  = $(GOBIN)/protoc-gen-go-grpc
-
 .DEFAULT_GOAL := help
 
 help:
@@ -173,10 +169,26 @@ clean:
 	@rm -rf $(BINARY_DIR) $(BUILD_DIR)
 
 # ---- Protobuf ----
+PROTO_DIR      := apis
+BUF := $(GOBIN)/buf
 
-proto:
+$(BUF):
+	@echo "Installing Buf..."
+	@go install github.com/bufbuild/buf/cmd/buf@latest
+
+proto: $(BUF)
 	@echo "Generating protobuf with protoc"; \
 	buf generate
+
+proto-lint: $(BUF)
+	@echo "→ Linting protobuf definitions"
+	buf lint
+
+proto-breaking: $(BUF)
+	@echo "→ Checking protobuf breaking changes"
+	buf breaking --against 'main'
+
+proto-all: proto-lint proto-breaking proto
 
 # ---- Docker ----
 

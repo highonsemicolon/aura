@@ -51,9 +51,29 @@ jobs:
           SVC_LIST=$(ls -d services/* 2>/dev/null | xargs -n1 basename | jq -R -s -c 'split("\n")[:-1]')
           echo "list=$SVC_LIST" >> $GITHUB_OUTPUT
 
-  lint:
+  proto:
     runs-on: ubuntu-latest
     needs: setup
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ needs.setup.outputs.go }}
+          cache: true
+      - name: Install Buf
+        run: go install github.com/bufbuild/buf/cmd/buf@latest
+      - name: Lint proto files
+        run: make proto-lint
+      - name: Check for breaking changes
+        if: github.ref == 'refs/heads/main'
+        run: make proto-breaking
+      - name: Generate protobufs
+        run: make proto
+
+  lint:
+    runs-on: ubuntu-latest
+    needs: [setup, proto]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-go@v6
@@ -67,7 +87,7 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    needs: setup
+    needs: [setup, proto]
     strategy:
       matrix:
         service: ${{ fromJSON(needs.setup.outputs.services) }}

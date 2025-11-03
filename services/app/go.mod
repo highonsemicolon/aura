@@ -3,6 +3,7 @@ module github.com/highonsemicolon/aura/services/app
 go 1.25.0
 
 require (
+	github.com/highonsemicolon/aura/apis v0.0.0-20251102174312-864620c4354b
 	github.com/highonsemicolon/aura/pkg/configloader v0.0.0-20251102155722-5f70b97aa84e
 	github.com/highonsemicolon/aura/pkg/db v0.0.0-20251102155722-5f70b97aa84e
 	github.com/highonsemicolon/aura/pkg/healthz v0.0.0-20251102155722-5f70b97aa84e
