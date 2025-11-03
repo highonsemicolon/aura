@@ -3,7 +3,7 @@ package greeter;
 
 option go_package = "/greeter";
 
-service Greeter {
+service GreeterService {
   rpc SayHello (HelloRequest) returns (HelloResponse);
 }
 

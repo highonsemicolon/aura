@@ -117,8 +117,8 @@ const file_greeter_greeter_proto_rawDesc = "" +
 	"\fHelloRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\")\n" +
 	"\rHelloResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage2D\n" +
-	"\aGreeter\x129\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage2K\n" +
+	"\x0eGreeterService\x129\n" +
 	"\bSayHello\x12\x15.greeter.HelloRequest\x1a\x16.greeter.HelloResponseBa\n" +
 	"\vcom.greeterB\fGreeterProtoP\x01Z\b/greeter\xa2\x02\x03GXX\xaa\x02\aGreeter\xca\x02\aGreeter\xe2\x02\x13Greeter\\GPBMetadata\xea\x02\aGreeterb\x06proto3"
 
@@ -140,8 +140,8 @@ var file_greeter_greeter_proto_goTypes = []any{
 	(*HelloResponse)(nil), // 1: greeter.HelloResponse
 }
 var file_greeter_greeter_proto_depIdxs = []int32{
-	0, // 0: greeter.Greeter.SayHello:input_type -> greeter.HelloRequest
-	1, // 1: greeter.Greeter.SayHello:output_type -> greeter.HelloResponse
+	0, // 0: greeter.GreeterService.SayHello:input_type -> greeter.HelloRequest
+	1, // 1: greeter.GreeterService.SayHello:output_type -> greeter.HelloResponse
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

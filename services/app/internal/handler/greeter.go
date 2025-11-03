@@ -12,7 +12,7 @@ import (
 )
 
 type GreeterHandler struct {
-	greeter.UnimplementedGreeterServer
+	greeter.UnimplementedGreeterServiceServer
 }
 
 func NewGreeterHandler() *GreeterHandler {

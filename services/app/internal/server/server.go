@@ -36,7 +36,7 @@ func New(cfg *config.Config, healthz *healthz.Healthz, log logging.Logger) (*Ser
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 	)
 
-	greeter.RegisterGreeterServer(s, handler.NewGreeterHandler())
+	greeter.RegisterGreeterServiceServer(s, handler.NewGreeterHandler())
 
 	grpc_health_v1.RegisterHealthServer(s, healthz.Server())
 

@@ -60,7 +60,7 @@ func main() {
 		}
 	}()
 
-	client := greeter.NewGreeterClient(conn)
+	client := greeter.NewGreeterServiceClient(conn)
 
 	resp, err := client.SayHello(ctx, &greeter.HelloRequest{Name: "Aura"})
 	if err != nil {
