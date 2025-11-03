@@ -19,7 +19,7 @@ func NewGreeterHandler() *GreeterHandler {
 	return &GreeterHandler{}
 }
 
-func (s *GreeterHandler) SayHello(ctx context.Context, req *greeter.HelloRequest) (*greeter.HelloResponse, error) {
+func (s *GreeterHandler) SayHello(ctx context.Context, req *greeter.SayHelloRequest) (*greeter.HelloResponse, error) {
 	log := logging.FromContext(ctx)
 
 	tracer := telemetry.Tracer("github.com/highonsemicolon/aura/cmd/grpc")

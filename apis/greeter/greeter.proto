@@ -4,10 +4,10 @@ package greeter;
 option go_package = "/greeter";
 
 service GreeterService {
-  rpc SayHello (HelloRequest) returns (HelloResponse);
+  rpc SayHello (SayHelloRequest) returns (HelloResponse);
 }
 
-message HelloRequest {
+message SayHelloRequest {
   string name = 1;
 }
 

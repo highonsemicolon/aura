@@ -26,7 +26,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GreeterServiceClient interface {
-	SayHello(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloResponse, error)
+	SayHello(ctx context.Context, in *SayHelloRequest, opts ...grpc.CallOption) (*HelloResponse, error)
 }
 
 type greeterServiceClient struct {
@@ -37,7 +37,7 @@ func NewGreeterServiceClient(cc grpc.ClientConnInterface) GreeterServiceClient {
 	return &greeterServiceClient{cc}
 }
 
-func (c *greeterServiceClient) SayHello(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloResponse, error) {
+func (c *greeterServiceClient) SayHello(ctx context.Context, in *SayHelloRequest, opts ...grpc.CallOption) (*HelloResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(HelloResponse)
 	err := c.cc.Invoke(ctx, GreeterService_SayHello_FullMethodName, in, out, cOpts...)
@@ -51,7 +51,7 @@ func (c *greeterServiceClient) SayHello(ctx context.Context, in *HelloRequest, o
 // All implementations must embed UnimplementedGreeterServiceServer
 // for forward compatibility.
 type GreeterServiceServer interface {
-	SayHello(context.Context, *HelloRequest) (*HelloResponse, error)
+	SayHello(context.Context, *SayHelloRequest) (*HelloResponse, error)
 	mustEmbedUnimplementedGreeterServiceServer()
 }
 
@@ -62,7 +62,7 @@ type GreeterServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedGreeterServiceServer struct{}
 
-func (UnimplementedGreeterServiceServer) SayHello(context.Context, *HelloRequest) (*HelloResponse, error) {
+func (UnimplementedGreeterServiceServer) SayHello(context.Context, *SayHelloRequest) (*HelloResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SayHello not implemented")
 }
 func (UnimplementedGreeterServiceServer) mustEmbedUnimplementedGreeterServiceServer() {}
@@ -87,7 +87,7 @@ func RegisterGreeterServiceServer(s grpc.ServiceRegistrar, srv GreeterServiceSer
 }
 
 func _GreeterService_SayHello_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HelloRequest)
+	in := new(SayHelloRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func _GreeterService_SayHello_Handler(srv interface{}, ctx context.Context, dec 
 		FullMethod: GreeterService_SayHello_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GreeterServiceServer).SayHello(ctx, req.(*HelloRequest))
+		return srv.(GreeterServiceServer).SayHello(ctx, req.(*SayHelloRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

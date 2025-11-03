@@ -62,7 +62,7 @@ func main() {
 
 	client := greeter.NewGreeterServiceClient(conn)
 
-	resp, err := client.SayHello(ctx, &greeter.HelloRequest{Name: "Aura"})
+	resp, err := client.SayHello(ctx, &greeter.SayHelloRequest{Name: "Aura"})
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("grpc_error", err.Error()))

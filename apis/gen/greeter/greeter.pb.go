@@ -21,27 +21,27 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type HelloRequest struct {
+type SayHelloRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *HelloRequest) Reset() {
-	*x = HelloRequest{}
+func (x *SayHelloRequest) Reset() {
+	*x = SayHelloRequest{}
 	mi := &file_greeter_greeter_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *HelloRequest) String() string {
+func (x *SayHelloRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*HelloRequest) ProtoMessage() {}
+func (*SayHelloRequest) ProtoMessage() {}
 
-func (x *HelloRequest) ProtoReflect() protoreflect.Message {
+func (x *SayHelloRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_greeter_greeter_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -53,12 +53,12 @@ func (x *HelloRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use HelloRequest.ProtoReflect.Descriptor instead.
-func (*HelloRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use SayHelloRequest.ProtoReflect.Descriptor instead.
+func (*SayHelloRequest) Descriptor() ([]byte, []int) {
 	return file_greeter_greeter_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *HelloRequest) GetName() string {
+func (x *SayHelloRequest) GetName() string {
 	if x != nil {
 		return x.Name
 	}
@@ -113,13 +113,13 @@ var File_greeter_greeter_proto protoreflect.FileDescriptor
 
 const file_greeter_greeter_proto_rawDesc = "" +
 	"\n" +
-	"\x15greeter/greeter.proto\x12\agreeter\"\"\n" +
-	"\fHelloRequest\x12\x12\n" +
+	"\x15greeter/greeter.proto\x12\agreeter\"%\n" +
+	"\x0fSayHelloRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\")\n" +
 	"\rHelloResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage2K\n" +
-	"\x0eGreeterService\x129\n" +
-	"\bSayHello\x12\x15.greeter.HelloRequest\x1a\x16.greeter.HelloResponseBa\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage2N\n" +
+	"\x0eGreeterService\x12<\n" +
+	"\bSayHello\x12\x18.greeter.SayHelloRequest\x1a\x16.greeter.HelloResponseBa\n" +
 	"\vcom.greeterB\fGreeterProtoP\x01Z\b/greeter\xa2\x02\x03GXX\xaa\x02\aGreeter\xca\x02\aGreeter\xe2\x02\x13Greeter\\GPBMetadata\xea\x02\aGreeterb\x06proto3"
 
 var (
@@ -136,11 +136,11 @@ func file_greeter_greeter_proto_rawDescGZIP() []byte {
 
 var file_greeter_greeter_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_greeter_greeter_proto_goTypes = []any{
-	(*HelloRequest)(nil),  // 0: greeter.HelloRequest
-	(*HelloResponse)(nil), // 1: greeter.HelloResponse
+	(*SayHelloRequest)(nil), // 0: greeter.SayHelloRequest
+	(*HelloResponse)(nil),   // 1: greeter.HelloResponse
 }
 var file_greeter_greeter_proto_depIdxs = []int32{
-	0, // 0: greeter.GreeterService.SayHello:input_type -> greeter.HelloRequest
+	0, // 0: greeter.GreeterService.SayHello:input_type -> greeter.SayHelloRequest
 	1, // 1: greeter.GreeterService.SayHello:output_type -> greeter.HelloResponse
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
