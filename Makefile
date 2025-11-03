@@ -186,7 +186,7 @@ proto-lint: $(BUF)
 
 proto-breaking: $(BUF)
 	@echo "→ Checking protobuf breaking changes"
-	buf breaking --against 'main'
+	buf breaking --against '.git#branch=main,subdir=apis'
 
 proto-all: proto-lint proto-breaking proto
 
