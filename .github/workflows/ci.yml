@@ -41,7 +41,12 @@ jobs:
 
       - id: meta
         run: |
-          echo "version=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/}"   # e.g. v1.3.0
+          else
+            VERSION="${GITHUB_SHA::7}"           # short SHA for non-tags
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "sha=${GITHUB_SHA}" >> $GITHUB_OUTPUT
 
       - id: svcs
@@ -157,7 +162,7 @@ jobs:
       - uses: aquasecurity/trivy-action@0.33.1
         with:
           scan-type: image
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.APP_NAME }}-${{ matrix.service }}:${{ needs.setup.outputs.version }}-${{ needs.setup.outputs.sha }}
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.APP_NAME }}-${{ matrix.service }}:${{ needs.setup.outputs.version }}
           ignore-unfixed: true
           format: table
           severity: CRITICAL,HIGH

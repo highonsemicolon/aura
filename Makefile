@@ -185,7 +185,7 @@ proto-all: proto-lint proto-breaking proto
 
 REGISTRY     ?= ghcr.io
 IMAGE_OWNER  ?= $(shell basename $(shell dirname $(shell git remote get-url origin 2>/dev/null || echo unknown/unknown)))
-IMAGE_TAG    ?= $(VERSION)-$(COMMIT_HASH)
+IMAGE_TAG    ?= $(VERSION)
 DOCKER_BUILDKIT ?= 1
 PLATFORMS    ?= linux/amd64
 PUSH         ?= false
