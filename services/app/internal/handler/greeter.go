@@ -19,7 +19,7 @@ func NewGreeterHandler() *GreeterHandler {
 	return &GreeterHandler{}
 }
 
-func (s *GreeterHandler) SayHello(ctx context.Context, req *greeter.SayHelloRequest) (*greeter.HelloResponse, error) {
+func (s *GreeterHandler) SayHello(ctx context.Context, req *greeter.SayHelloRequest) (*greeter.SayHelloResponse, error) {
 	log := logging.FromContext(ctx)
 
 	tracer := telemetry.Tracer("github.com/highonsemicolon/aura/cmd/grpc")
@@ -36,5 +36,5 @@ func (s *GreeterHandler) SayHello(ctx context.Context, req *greeter.SayHelloRequ
 	log.InfoF("Received SayHello request for %s", req.Name)
 
 	message := fmt.Sprintf("Hello, %s!", req.Name)
-	return &greeter.HelloResponse{Message: message}, nil
+	return &greeter.SayHelloResponse{Message: message}, nil
 }
