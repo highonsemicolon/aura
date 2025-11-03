@@ -107,6 +107,19 @@ jobs:
           name: coverage-${{ matrix.service }}
           path: .build/
 
+  merge-coverage:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          path: .build/
+      - name: Merge coverage files
+        run: |
+          grep -h -v "^mode:" .build/*.cover.out > all.cov
+          echo "mode: atomic" | cat - all.cov > coverage.out
+          go tool cover -func=coverage.out
+
   docker-images:
     runs-on: ubuntu-latest
     needs: [setup, test]
