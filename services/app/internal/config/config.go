@@ -1,6 +1,7 @@
 package config
 
 type Config struct {
+	Env         string  `koanf:"env" validate:"required,oneof=dev prod"`
 	ServiceName string  `koanf:"service_name" validate:"required"`
 	GRPC        GRPC    `koanf:"grpc" validate:"required"`
 	OTEL        OTEL    `koanf:"otel"`
