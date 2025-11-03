@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/highonsemicolon/aura/apis/gen/greeter"
+	greeterpb "github.com/highonsemicolon/aura/apis/gen/greeter/v1"
 	"github.com/highonsemicolon/aura/pkg/healthz"
 	"github.com/highonsemicolon/aura/pkg/logging"
 	"github.com/highonsemicolon/aura/services/app/internal/config"
@@ -36,7 +36,7 @@ func New(cfg *config.Config, healthz *healthz.Healthz, log logging.Logger) (*Ser
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 	)
 
-	greeter.RegisterGreeterServiceServer(s, handler.NewGreeterHandler())
+	greeterpb.RegisterGreeterServiceServer(s, handler.NewGreeterHandler())
 
 	grpc_health_v1.RegisterHealthServer(s, healthz.Server())
 
