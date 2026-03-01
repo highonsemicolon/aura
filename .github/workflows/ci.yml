@@ -107,7 +107,7 @@ jobs:
       - name: Run tests with coverage for one service
         run: make cover-one SERVICE=${{ matrix.service }} COVER_MIN=0
       - name: Upload coverage
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-${{ matrix.service }}
           path: .build/
