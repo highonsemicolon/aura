@@ -159,7 +159,7 @@ jobs:
       matrix:
         service: ${{ fromJSON(needs.setup.outputs.services) }}
     steps:
-      - uses: aquasecurity/trivy-action@0.33.1
+      - uses: aquasecurity/trivy-action@0.34.1
         with:
           scan-type: image
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.APP_NAME }}-${{ matrix.service }}:${{ needs.setup.outputs.version }}
