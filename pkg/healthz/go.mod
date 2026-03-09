@@ -2,7 +2,7 @@ module github.com/highonsemicolon/aura/pkg/healthz
 
 go 1.25.0
 
-require google.golang.org/grpc v1.79.1
+require google.golang.org/grpc v1.79.2
 
 require (
 	golang.org/x/net v0.48.0 // indirect

@@ -4,9 +4,9 @@ go 1.25.0
 
 require (
 	github.com/rs/zerolog v1.34.0
-	go.opentelemetry.io/otel v1.40.0
-	go.opentelemetry.io/otel/trace v1.40.0
-	google.golang.org/grpc v1.79.1
+	go.opentelemetry.io/otel v1.42.0
+	go.opentelemetry.io/otel/trace v1.42.0
+	google.golang.org/grpc v1.79.2
 )
 
 require (
