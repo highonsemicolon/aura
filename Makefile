@@ -74,6 +74,12 @@ lint:
 		(cd $$m && golangci-lint run ./...); \
 	done
 
+upgrade-go:
+	@for m in $(MODULES); do \
+		echo "Upgrading $$m"; \
+		cd $$m && go mod edit -go=$(GO_VERSION) && go mod tidy; \
+	done
+
 # ---- Development ----
 
 AIR_BIN ?= $(GOBIN)/air
