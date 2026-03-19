@@ -75,9 +75,17 @@ lint:
 	done
 
 upgrade-go:
-	@for m in $(MODULES); do \
-		echo "Upgrading $$m"; \
-		cd $$m && go mod edit -go=$(GO_VERSION) && go mod tidy; \
+	@if [ -z "$(GO_VERSION)" ]; then \
+		echo "Usage: make upgrade-go GO_VERSION=1.26.1"; \
+		exit 1; \
+	fi
+
+	go work edit -go=$(GO_VERSION)
+
+	@set -e; \
+	for m in $(MODULES); do \
+		echo "Upgrading $$m to Go $(GO_VERSION)"; \
+		(cd $$m && go mod edit -go=$(GO_VERSION) && go mod tidy); \
 	done
 
 # ---- Development ----
