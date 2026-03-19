@@ -1,6 +1,6 @@
 module github.com/highonsemicolon/aura/apis
 
-go 1.25.0
+go 1.26.1
 
 require (
 	google.golang.org/grpc v1.76.0

@@ -1,6 +1,6 @@
 module github.com/highonsemicolon/aura/pkg/logging
 
-go 1.25.0
+go 1.26.1
 
 require (
 	github.com/rs/zerolog v1.34.0

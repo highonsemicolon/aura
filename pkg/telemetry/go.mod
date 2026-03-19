@@ -1,6 +1,6 @@
 module github.com/highonsemicolon/aura/pkg/telemetry
 
-go 1.25.0
+go 1.26.1
 
 require (
 	go.opentelemetry.io/otel v1.40.0

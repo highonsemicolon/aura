@@ -1,6 +1,6 @@
 module github.com/highonsemicolon/aura/pkg/db
 
-go 1.25.0
+go 1.26.1
 
 require go.mongodb.org/mongo-driver v1.17.6
 
