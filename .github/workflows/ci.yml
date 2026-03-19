@@ -133,6 +133,11 @@ jobs:
           grep -h -v "^mode:" $GITHUB_WORKSPACE/output/coverage-*/*.cover.out > all.cov
           echo "mode: atomic" | cat - all.cov > coverage.out
           go tool cover -func=coverage.out
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.out
+          fail_ci_if_error: true
 
   docker-images:
     runs-on: ubuntu-latest
