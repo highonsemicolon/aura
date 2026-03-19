@@ -106,6 +106,8 @@ COVER_MIN     ?= 00
 
 $(BUILD_DIR):
 	@mkdir -p $(BUILD_DIR)
+$(BINARY_DIR):
+	@mkdir -p $(BINARY_DIR)
 
 test-one:
 ifndef SERVICE
