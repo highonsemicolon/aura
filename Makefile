@@ -75,11 +75,6 @@ lint:
 	done
 
 upgrade-go:
-	@if [ -z "$(GO_VERSION)" ]; then \
-		echo "Usage: make upgrade-go GO_VERSION=1.26.1"; \
-		exit 1; \
-	fi
-
 	go work edit -go=$(GO_VERSION)
 
 	@set -e; \
