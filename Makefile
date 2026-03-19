@@ -6,7 +6,7 @@ print-%:
 # ==== Project metadata ====
 APP_NAME        ?= aura
 BINARY_DIR      ?= .bin
-BUILD_DIR       ?= .build
+BUILD_DIR       ?= output
 GO_VERSION 		?= $(shell if [ -f go.work ]; then grep '^go ' go.work | awk '{print $$2}'; else grep '^go ' services/app/go.mod | awk '{print $$2}'; fi)
 GO_FLAGS        ?= -trimpath -buildvcs=false
 GOBIN           ?= $(shell go env GOBIN)
@@ -157,9 +157,6 @@ build: $(BINARY_DIR)
 			go build $(GO_FLAGS) -ldflags "$(LDFLAGS)" -o $(BINARY_DIR)/$$svc ./services/$$svc; \
 		fi; \
 	done
-
-$(BINARY_DIR):
-	@mkdir -p $(BINARY_DIR)
 
 run:
 ifndef SERVICE

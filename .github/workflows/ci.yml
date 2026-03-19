@@ -109,11 +109,15 @@ jobs:
           cache-dependency-path: '**/go.sum'
       - name: Run tests with coverage for one service
         run: make cover-one SERVICE=${{ matrix.service }} COVER_MIN=0
+      - name: Debug absolute path
+        run: |
+          echo "Workspace: $GITHUB_WORKSPACE"
+          ls -la $GITHUB_WORKSPACE/output || true
       - name: Upload coverage
         uses: actions/upload-artifact@v7
         with:
           name: coverage-${{ matrix.service }}
-          path: .build/
+          path: ${{ github.workspace }}/output/${{ matrix.service }}.cover.out
 
   merge-coverage:
     runs-on: ubuntu-latest
@@ -121,10 +125,11 @@ jobs:
     steps:
       - uses: actions/download-artifact@v8
         with:
-          path: .build/
+          path: output/
       - name: Merge coverage files
         run: |
-          grep -h -v "^mode:" .build/*.cover.out > all.cov
+          set -e
+          grep -h -v "^mode:" $GITHUB_WORKSPACE/output/coverage-*/*.cover.out > all.cov
           echo "mode: atomic" | cat - all.cov > coverage.out
           go tool cover -func=coverage.out
 
