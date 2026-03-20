@@ -75,7 +75,7 @@ jobs:
       - name: Lint proto files
         run: make proto-lint
       - name: Check for breaking changes
-        if: github.ref == 'refs/heads/main'
+        if: github.event_name == 'pull_request'
         run: make proto-breaking
       - name: Generate protobufs
         run: make proto
