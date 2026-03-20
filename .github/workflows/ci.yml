@@ -69,8 +69,9 @@ jobs:
           go-version: ${{ needs.setup.outputs.go }}
           cache: true
           cache-dependency-path: '**/go.sum'
-      - name: Install Buf
-        run: go install github.com/bufbuild/buf/cmd/buf@latest
+      - uses: bufbuild/buf-setup-action@v1
+        with:
+          version: "1.50.0"
       - name: Lint proto files
         run: make proto-lint
       - name: Check for breaking changes
