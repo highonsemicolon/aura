@@ -72,13 +72,13 @@ jobs:
       - uses: bufbuild/buf-setup-action@v1
         with:
           version: "1.50.0"
+      - name: Generate protobufs
+        run: make proto
       - name: Lint proto files
         run: make proto-lint
       - name: Check for breaking changes
         if: github.event_name == 'pull_request'
         run: make proto-breaking
-      - name: Generate protobufs
-        run: make proto
 
   lint:
     runs-on: ubuntu-latest
