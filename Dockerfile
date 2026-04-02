@@ -18,6 +18,9 @@ ARG SERVICE
 ARG LDFLAGS=""
 RUN test -n "$SERVICE" || (echo "SERVICE build-arg is required" && exit 1)
 
+# Generate protobuf code
+RUN make proto
+
 # Build
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
