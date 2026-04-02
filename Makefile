@@ -70,6 +70,10 @@ lint:
 	@command -v golangci-lint >/dev/null 2>&1 || { echo "Installing golangci-lint..."; \
 		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOBIN) v2.4.0; };
 	@for m in $(MODULES); do \
+		if [ "$$(basename $$m)" = "apis" ]; then \
+			echo "→ skipping $$m (no Go files)"; \
+			continue; \
+		fi; \
 		echo "→ golangci-lint $$m"; \
 		(cd $$m && golangci-lint run ./...); \
 	done
