@@ -2,10 +2,10 @@ module github.com/highonsemicolon/aura/pkg/healthz
 
 go 1.26.1
 
-require google.golang.org/grpc v1.79.3
+require google.golang.org/grpc v1.80.0
 
 require (
-	go.opentelemetry.io/otel v1.42.0 // indirect
+	go.opentelemetry.io/otel v1.43.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.42.0 // indirect
 	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
