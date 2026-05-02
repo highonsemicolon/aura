@@ -5,11 +5,11 @@ managed:
     - file_option: go_package_prefix
       value: github.com/highonsemicolon/aura/apis/gen
 plugins:
-  - local: protoc-gen-go
+  - remote: buf.build/protocolbuffers/go
     out: apis/gen
     opt:
       - paths=source_relative
-  - local: protoc-gen-go-grpc
+  - remote: buf.build/grpc/go
     out: apis/gen
     opt:
       - paths=source_relative
