@@ -80,7 +80,7 @@ jobs:
         if: github.event_name == 'pull_request'
         run: make proto-breaking
       - name: Upload generated code
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: apis-gen
           path: apis/gen
