@@ -1,9 +1,20 @@
 services:
-  jaeger:
-    image: jaegertracing/all-in-one:latest
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    command: ["--config=/etc/otel-config.yaml"]
+    volumes:
+      - ./otel-config.yaml:/etc/otel-config.yaml
     ports:
-      - "16686:16686"   # Jaeger UI
-      - "4318:4318"     # OTLP HTTP (what your app uses)
-    environment:
-      - COLLECTOR_OTLP_ENABLED=true
+      - "4317:4317"   # OTLP gRPC
+    depends_on:
+      - jaeger
+    profiles: 
+      - "infra"
+
+  jaeger:
+    image: jaegertracing/jaeger:latest
+    ports:
+      - "16686:16686" # UI
+    profiles: 
+      - "infra"
 
