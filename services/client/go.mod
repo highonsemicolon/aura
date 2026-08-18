@@ -1,6 +1,6 @@
 module github.com/highonsemicolon/aura/services/client
 
-go 1.26.1
+go 1.26.4
 
 require (
 	github.com/highonsemicolon/aura/apis v0.0.0-20251103164015-7d908293cf82
